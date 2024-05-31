@@ -47,7 +47,7 @@ public class BattleUIManager : MonoBehaviour
         moveButton4.GetComponentInChildren<Text>().text = playerMonster.moves[3].name;
     }
 
-    public void OnMoveButton1()
+    /*public void OnMoveButton1()
     {
         battle.PlayerChooseMove(playerMonster.moves[0]);
     }
@@ -65,7 +65,7 @@ public class BattleUIManager : MonoBehaviour
     public void OnMoveButton4()
     {
         battle.PlayerChooseMove(playerMonster.moves[3]);
-    }
+    }*/
 
     public void DisplayMessage(string message)
     {
