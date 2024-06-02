@@ -26,7 +26,7 @@ namespace PracticeMonster
         {
             SetCapsuleColliderRadius(DefaultColliderData.Radius);
 
-            SetCapsuleColliderRadius(DefaultColliderData.Height * (1f - SlopeData.StepHeightPercentage));
+            SetCapsuleColliderHeight(DefaultColliderData.Height * (1f - SlopeData.StepHeightPercentage));
 
             RecalculateCapsuleColliderCenter();
 

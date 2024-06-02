@@ -17,6 +17,7 @@ namespace PracticeMonster
             base.Enter();
 
             stateMachine.ReusableData.MovementSpeedModifier = 0;
+            stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.WeakForce;
 
             ResetVelocity();
         }

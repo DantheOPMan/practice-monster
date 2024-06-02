@@ -11,17 +11,20 @@ namespace PracticeMonster
         protected PlayerMovementStateMachine stateMachine;
 
         protected PlayerGroundedData movementData;
-
+        protected PlayerAirborneData airborneData;
+        
         public PlayerMovementState(PlayerMovementStateMachine playerMovementstateMachine)
         {
             stateMachine = playerMovementstateMachine;
             movementData = stateMachine.Player.Data.GroundedData;
+            airborneData = stateMachine.Player.Data.AirborneData;
+
             InitializeData();
         }
 
         private void InitializeData()
         {
-            stateMachine.ReusableData.TimeToReachTargetRotation = movementData.BaseRotationData.TargetRotationReachTime;
+            SetBaseRotationData();
         }
 
         #region Istate Methods
@@ -50,7 +53,34 @@ namespace PracticeMonster
         {
 
         }
+        public virtual void OnAnimationEnterEvent()
+        {
+
+        }
+        public virtual void OnAnimationExitEvent()
+        {
+
+        }
+        public virtual void OnAnimationTransitionEvent()
+        {
+
+        }
+        public virtual void OnTriggerEnter(Collider collider)
+        {
+            if (stateMachine.Player.LayerData.IsGroundLayer(collider.gameObject.layer))
+            {
+                OnContactWithGround(collider);
+            }
+        }
+        public void OnTriggerExit(Collider collider)
+        {
+            if (stateMachine.Player.LayerData.IsGroundLayer(collider.gameObject.layer))
+            {
+                OnContactWithGroundExited(collider);
+            }
+        }
         #endregion
+
         #region Main Methods
         private void ReadMovementInput()
         {
@@ -119,13 +149,28 @@ namespace PracticeMonster
         #endregion
 
         #region Reusable Methods
+        protected virtual void AddInputActionsCallbacks()
+        {
+            stateMachine.Player.Input.PlayerActions.WalkToggle.started += OnWalkToggleStarted;
+        }
+        protected virtual void RemoveInputActionsCallbacks()
+        {
+            stateMachine.Player.Input.PlayerActions.WalkToggle.started -= OnWalkToggleStarted;
+
+        }
+        protected void SetBaseRotationData()
+        {
+            stateMachine.ReusableData.RotationData = movementData.BaseRotationData;
+
+            stateMachine.ReusableData.TimeToReachTargetRotation = movementData.BaseRotationData.TargetRotationReachTime;
+        }
         protected Vector3 GetMovementInputDirection()
         {
             return new Vector3(stateMachine.ReusableData.MovementInput.x, 0f, stateMachine.ReusableData.MovementInput.y);
         }
         protected float GetMovementSpeed()
         {
-            return movementData.BaseSpeed * stateMachine.ReusableData.MovementSpeedModifier;
+            return movementData.BaseSpeed * stateMachine.ReusableData.MovementSpeedModifier * stateMachine.ReusableData.MovementOnSlopesSpeedModifier;
         }
         protected Vector3 GetPlayerHorizontalVelocity()
         {
@@ -134,6 +179,11 @@ namespace PracticeMonster
             playerHorizontalVelocity.y = 0f;
 
             return playerHorizontalVelocity;
+        }
+
+        protected Vector3 GetPlayerVerticalVelocity()
+        {
+            return new Vector3(0f, stateMachine.Player.Rigidbody.velocity.y, 0f);
         }
         protected void RotateTowardsTargetRotation()
         {
@@ -177,13 +227,50 @@ namespace PracticeMonster
         {
             stateMachine.Player.Rigidbody.velocity = Vector3.zero;
         }
-        protected virtual void AddInputActionsCallbacks()
+
+        protected void ResetVerticalVelocity()
         {
-            stateMachine.Player.Input.PlayerActions.WalkToggle.started += OnWalkToggleStarted;
+            Vector3 playerHorizontalVelocity = GetPlayerHorizontalVelocity();
+
+            stateMachine.Player.Rigidbody.velocity = playerHorizontalVelocity;
         }
-        protected virtual void RemoveInputActionsCallbacks()
+        
+        protected void DecelerateHorizontally()
         {
-            stateMachine.Player.Input.PlayerActions.WalkToggle.started -= OnWalkToggleStarted;
+            Vector3 playerHorizontalVelocity = GetPlayerHorizontalVelocity();
+
+            stateMachine.Player.Rigidbody.AddForce(-playerHorizontalVelocity * stateMachine.ReusableData.MovementDecelerationForce, ForceMode.Acceleration);
+        }
+        protected void DecelerateVertically()
+        {
+            Vector3 playerVerticalVelocity = GetPlayerVerticalVelocity();
+
+            stateMachine.Player.Rigidbody.AddForce(-playerVerticalVelocity * stateMachine.ReusableData.MovementDecelerationForce, ForceMode.Acceleration);
+        }
+        protected bool IsMovingHorizontally(float minimumMagnitude = 0.1f)
+        {
+            Vector3 playerHorizontalVelocity = GetPlayerHorizontalVelocity();
+
+            Vector2 playerHorizontalMovement = new Vector2(playerHorizontalVelocity.x, playerHorizontalVelocity.z);
+
+            return playerHorizontalMovement.magnitude >  minimumMagnitude;
+        }
+
+        protected bool IsMovingUp(float minimumVelocity = 0.1f)
+        {
+            return GetPlayerVerticalVelocity().y > minimumVelocity;
+        }
+        protected bool IsMovingDown(float minimumVelocity = 0.1f)
+        {
+            return GetPlayerVerticalVelocity().y < -minimumVelocity;
+        }
+
+        protected virtual void OnContactWithGround(Collider collider)
+        {
+
+        }
+        protected virtual void OnContactWithGroundExited(Collider collider)
+        {
 
         }
         #endregion
@@ -193,6 +280,10 @@ namespace PracticeMonster
         {
             stateMachine.ReusableData.ShouldWalk = !stateMachine.ReusableData.ShouldWalk;
         }
+
+       
+
+
         #endregion
     }
 }
