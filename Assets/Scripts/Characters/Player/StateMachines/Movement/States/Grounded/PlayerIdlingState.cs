@@ -8,15 +8,20 @@ namespace PracticeMonster
 {
     public class PlayerIdlingState : PlayerGroundedState
     {
+        private PlayerIdleData idleData;
         public PlayerIdlingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
+            idleData = movementData.IdleData;
         }
         #region IState Methods
         public override void Enter()
         {
+            stateMachine.ReusableData.MovementSpeedModifier = 0f;
+
+            stateMachine.ReusableData.BackwardsCameraRecenteringData = idleData.BackwardsCameraRecenteringData;
+
             base.Enter();
 
-            stateMachine.ReusableData.MovementSpeedModifier = 0;
             stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.WeakForce;
 
             ResetVelocity();

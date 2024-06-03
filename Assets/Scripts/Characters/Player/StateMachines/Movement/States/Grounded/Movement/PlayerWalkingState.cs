@@ -7,15 +7,26 @@ namespace PracticeMonster
 {
     public class PlayerWalkingState : PlayerMovingState
     {
+        private PlayerWalkData walkData;
         public PlayerWalkingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
+            walkData = movementData.WalkData;
         }
         #region Istate Methods
         public override void Enter()
         {
+            stateMachine.ReusableData.MovementSpeedModifier = movementData.WalkData.SpeedModifier;
+
+            stateMachine.ReusableData.BackwardsCameraRecenteringData = walkData.BackwardsCameraRecenteringData;
+
             base.Enter();
 
-            stateMachine.ReusableData.MovementSpeedModifier = movementData.WalkData.SpeedModifier;
+        }
+        public override void Exit()
+        {
+            base.Exit();
+
+            SetBaseCameraRecenteringData();
         }
         #endregion
 
@@ -25,6 +36,8 @@ namespace PracticeMonster
         protected override void OnMovementCanceled(InputAction.CallbackContext context)
         {
             stateMachine.ChangeState(stateMachine.LightStoppingState);
+
+            base.OnMovementCanceled(context);
         }
         protected override void OnWalkToggleStarted(InputAction.CallbackContext context)
         {

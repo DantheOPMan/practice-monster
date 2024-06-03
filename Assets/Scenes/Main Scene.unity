@@ -3285,10 +3285,16 @@ MonoBehaviour:
       <StepHeightPercentage>k__BackingField: 0.25
       <FloatRayDistance>k__BackingField: 2
       <StepReachForce>k__BackingField: 25
+    <TriggerColliderData>k__BackingField:
+      <GroundCheckCollider>k__BackingField: {fileID: 1403071398}
   <LayerData>k__BackingField:
     <GroundLayer>k__BackingField:
       serializedVersion: 2
       m_Bits: 64
+  <CameraUtility>k__BackingField:
+    <VirtualCamera>k__BackingField: {fileID: 1245603087}
+    <DefaultHorizontalWaitTime>k__BackingField: 0
+    <DefaultHorizontalRecenteringTime>k__BackingField: 4
 --- !u!1 &1903919166
 GameObject:
   m_ObjectHideFlags: 0
@@ -10674,8 +10680,8 @@ MonoBehaviour:
       m_LegacyVelocityFilterStrength: -1
   m_VerticalRecentering:
     m_enabled: 0
-    m_WaitTime: 1
-    m_RecenteringTime: 2
+    m_WaitTime: 0
+    m_RecenteringTime: 4
     m_LegacyHeadingDefinition: -1
     m_LegacyVelocityFilterStrength: -1
   m_HorizontalAxis:
@@ -10765,6 +10771,6 @@ SceneRoots:
   - {fileID: 963194228}
   - {fileID: 946742735}
   - {fileID: 705507995}
-  - {fileID: 122405213}
   - {fileID: 1847589454}
+  - {fileID: 122405213}
   - {fileID: 1245603088}

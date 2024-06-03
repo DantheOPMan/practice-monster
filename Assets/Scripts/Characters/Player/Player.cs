@@ -12,6 +12,9 @@ namespace PracticeMonster
         [field: SerializeField] public PlayerCapsuleColliderUtility ColliderUtility { get; private set; }
         [field: SerializeField] public PlayerLayerData LayerData { get; private set; }
 
+        [field: Header("Cameras")]
+        [field: SerializeField] public PlayerCameraUtility CameraUtility { get; private set; }
+
         public Rigidbody Rigidbody { get; private set; }
         public Transform MainCameraTransform { get; private set; }
         public PlayerInput Input { get; private set; }
@@ -25,6 +28,7 @@ namespace PracticeMonster
 
             ColliderUtility.Initialize(gameObject);
             ColliderUtility.CalculateCapsuleColliderDimensions();
+            CameraUtility.Initialize();
 
             MainCameraTransform = Camera.main.transform;
             

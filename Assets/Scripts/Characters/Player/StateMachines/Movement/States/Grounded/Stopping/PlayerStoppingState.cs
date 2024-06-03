@@ -11,9 +11,10 @@ namespace PracticeMonster
         #region IState Methods
         public override void Enter()
         {
+            stateMachine.ReusableData.MovementSpeedModifier = 0f;
+
             base.Enter();
 
-            stateMachine.ReusableData.MovementSpeedModifier = 0f;
         }
 
         public override void PhysicsUpdate()
@@ -51,11 +52,6 @@ namespace PracticeMonster
         #endregion
 
         #region Input Methods
-        protected override void OnMovementCanceled(InputAction.CallbackContext context)
-        {
-            
-        }
-
         protected void OnMovementStarted(InputAction.CallbackContext context)
         {
             OnMove();

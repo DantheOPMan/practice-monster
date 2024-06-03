@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace PracticeMonster
 {
@@ -117,6 +118,12 @@ namespace PracticeMonster
             ResetVelocity();
 
             stateMachine.Player.Rigidbody.AddForce(jumpForce, ForceMode.VelocityChange);
+        }
+        #endregion
+
+        #region Input Methods
+        protected override void OnMovementCanceled(InputAction.CallbackContext context)
+        {
         }
         #endregion
     }

@@ -18,6 +18,8 @@ namespace PracticeMonster
             base.Enter();
 
             UpdateShouldSprintState();
+
+            UpdateCameraRecenteringState(stateMachine.ReusableData.MovementInput);
         }
 
         public override void PhysicsUpdate()
@@ -76,6 +78,13 @@ namespace PracticeMonster
         {
             float slopeSpeedModifier = movementData.SlopeSpeedAngles.Evaluate(angle);
 
+            if (stateMachine.ReusableData.MovementOnSlopesSpeedModifier != slopeSpeedModifier)
+            {
+                stateMachine.ReusableData.MovementSpeedModifier = slopeSpeedModifier;
+                UpdateCameraRecenteringState(stateMachine.ReusableData.MovementInput);
+            }
+            
+
             stateMachine.ReusableData.MovementOnSlopesSpeedModifier = slopeSpeedModifier;
 
             return slopeSpeedModifier;
@@ -95,8 +104,6 @@ namespace PracticeMonster
         {
             base.AddInputActionsCallbacks();
 
-            stateMachine.Player.Input.PlayerActions.Movement.canceled += OnMovementCanceled;
-
             stateMachine.Player.Input.PlayerActions.Dash.started += OnDashStarted;
 
             stateMachine.Player.Input.PlayerActions.Jump.started += OnJumpStarted;
@@ -107,8 +114,6 @@ namespace PracticeMonster
         protected override void RemoveInputActionsCallbacks()
         {
             base.RemoveInputActionsCallbacks();
-
-            stateMachine.Player.Input.PlayerActions.Movement.canceled -= OnMovementCanceled;
 
             stateMachine.Player.Input.PlayerActions.Dash.started -= OnDashStarted;
             stateMachine.Player.Input.PlayerActions.Jump.started -= OnJumpStarted;
@@ -157,10 +162,6 @@ namespace PracticeMonster
         #endregion
 
         #region Input Methods
-        protected virtual void OnMovementCanceled(InputAction.CallbackContext context)
-        {
-            stateMachine.ChangeState(stateMachine.IdlingState);
-        }
         protected virtual void OnDashStarted(InputAction.CallbackContext context)
         {
             stateMachine.ChangeState(stateMachine.DashingState);

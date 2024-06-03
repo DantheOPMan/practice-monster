@@ -14,12 +14,18 @@ namespace PracticeMonster
         public PlayerWalkingState WalkingState { get; }
         public PlayerRunningState RunningState { get; }
         public PlayerSprintingState SprintingState { get; }
+
         public PlayerLightStoppingState LightStoppingState { get; }
         public PlayerMediumStoppingState MediumStoppingState { get; }
         public PlayerHardStoppingState HardStoppingState { get; }
+
+        public PlayerLightLandingState LightLandingState { get; }
+        public PlayerHardLandingState HardLandingState { get; }
+        public PlayerRollingState RollingState { get; }
+
         public PlayerJumpingState JumpingState { get; }
         public PlayerFallingState FallingState { get; }
-
+        
         public PlayerMovementStateMachine(Player player)
         {
             Player = player;
@@ -35,6 +41,10 @@ namespace PracticeMonster
             LightStoppingState = new PlayerLightStoppingState(this);
             MediumStoppingState = new PlayerMediumStoppingState(this);
             HardStoppingState = new PlayerHardStoppingState(this);
+
+            LightLandingState = new PlayerLightLandingState(this);
+            HardLandingState = new PlayerHardLandingState(this);
+            RollingState = new PlayerRollingState(this);
 
             JumpingState = new PlayerJumpingState(this);
             FallingState= new PlayerFallingState(this);
