@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace PracticeMonster
 {
@@ -68,47 +69,38 @@ namespace PracticeMonster
             dodgeButton = defenseSelectionPanel.transform.Find("DodgeButton").GetComponent<Button>();
             braceButton = defenseSelectionPanel.transform.Find("BraceButton").GetComponent<Button>();
             standbyButton = defenseSelectionPanel.transform.Find("StandbyButton").GetComponent<Button>();
+
+            moveSelectionPanel.SetActive(false);
+            defenseSelectionPanel.SetActive(false);
         }
 
         public void ShowMoveSelectionUI(System.Action<int> callback)
         {
             moveSelectionPanel.SetActive(true);
-            moveButton1.onClick.AddListener(() => { callback(0); moveSelected = true; HideMoveSelectionUI(); });
-            moveButton2.onClick.AddListener(() => { callback(1); moveSelected = true; HideMoveSelectionUI(); });
-            moveButton3.onClick.AddListener(() => { callback(2); moveSelected = true; HideMoveSelectionUI(); });
-            moveButton4.onClick.AddListener(() => { callback(3); moveSelected = true; HideMoveSelectionUI(); });
+            moveButton1.onClick.AddListener(() => { callback(0); moveSelected = true; moveSelectionPanel.SetActive(false); });
+            moveButton2.onClick.AddListener(() => { callback(1); moveSelected = true; moveSelectionPanel.SetActive(false); });
+            moveButton3.onClick.AddListener(() => { callback(2); moveSelected = true; moveSelectionPanel.SetActive(false); });
+            moveButton4.onClick.AddListener(() => { callback(3); moveSelected = true; moveSelectionPanel.SetActive(false); });
         }
 
         public void ShowDefenseSelectionUI(System.Action<int> callback)
         {
             defenseSelectionPanel.SetActive(true);
-            dodgeButton.onClick.AddListener(() => { callback(0); defenseActionSelected = true; HideDefenseSelectionUI(); });
-            braceButton.onClick.AddListener(() => { callback(1); defenseActionSelected = true; HideDefenseSelectionUI(); });
-            standbyButton.onClick.AddListener(() => { callback(2); defenseActionSelected = true; HideDefenseSelectionUI(); });
-        }
-
-        private void HideMoveSelectionUI()
-        {
-            moveSelectionPanel.SetActive(false);
-        }
-
-        private void HideDefenseSelectionUI()
-        {
-            defenseSelectionPanel.SetActive(false);
+            dodgeButton.onClick.AddListener(() => { callback(0); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+            braceButton.onClick.AddListener(() => { callback(1); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+            standbyButton.onClick.AddListener(() => { callback(2); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
         }
 
         private void OnMoveButtonClicked(int index)
         {
             selectedMoveIndex = index;
             moveSelected = true;
-            HideMoveSelectionUI();
         }
 
         private void OnDefenseButtonClicked(int index)
         {
             selectedDefenseIndex = index;
             defenseActionSelected = true;
-            HideDefenseSelectionUI();
         }
 
         public bool IsMoveSelected()

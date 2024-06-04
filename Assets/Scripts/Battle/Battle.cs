@@ -3,11 +3,12 @@ using UnityEngine;
 
 namespace PracticeMonster
 {
-    public class Battle: MonoBehaviour
+    public class Battle : MonoBehaviour
     {
         private BattleTrainer trainer1;
         private BattleTrainer trainer2;
         private int turnCount;
+        private BattleManager battleManager;
 
         public Battle(BattleTrainer trainer1, BattleTrainer trainer2)
         {
@@ -18,6 +19,8 @@ namespace PracticeMonster
             // Initialize action turns
             trainer1.ActionTurn = 0;
             trainer2.ActionTurn = 0;
+
+            battleManager = FindObjectOfType<BattleManager>();
         }
 
         public void PrintStatus()
@@ -70,6 +73,7 @@ namespace PracticeMonster
                 if (!SwitchToNextMonster(defenseMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
                     Debug.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
+                    battleManager.EndBattle();
                     yield break;
                 }
             }
@@ -78,6 +82,7 @@ namespace PracticeMonster
                 if (!SwitchToNextMonster(attackMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
                     Debug.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
+                    battleManager.EndBattle();
                     yield break;
                 }
             }
@@ -116,12 +121,12 @@ namespace PracticeMonster
             Debug.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
 
             // Adjust action turn based on move's speed adjustment
-            
+
         }
 
         private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)
         {
-            if(defensiveAction == "Brace")
+            if (defensiveAction == "Brace")
             {
                 return true;
             }
@@ -164,7 +169,7 @@ namespace PracticeMonster
 
         private string GetDefensiveAction(Monster defender, int index)
         {
-            if (index ==0 && defender.Stamina >= 30)
+            if (index == 0 && defender.Stamina >= 30)
             {
                 Debug.Log($"{defender.Nickname} attempts to dodge!");
                 defender.Stamina -= 30;
@@ -237,6 +242,5 @@ namespace PracticeMonster
                 defender = trainer1;
             }
         }
-
     }
 }

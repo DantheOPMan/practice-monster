@@ -53,3 +53,4 @@ MonoBehaviour:
   standbyButton: {fileID: 0}
   moveSelectionPanel: {fileID: 0}
   defenseSelectionPanel: {fileID: 0}
+  battleUIPrefab: {fileID: 4186547395105269283, guid: 7d02798ce94a18e42a5e7e83da8f916e, type: 3}
