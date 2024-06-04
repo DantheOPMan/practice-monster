@@ -9,8 +9,14 @@ namespace PracticeMonster
         private BattleTrainer trainer2;
         private int turnCount;
         private BattleManager battleManager;
+        private BattleState state;
 
-        public Battle(BattleTrainer trainer1, BattleTrainer trainer2)
+        private BattleTrainer attacker;
+        private BattleTrainer defender;
+        private int attackerMoveIndex;
+        private int defenderActionIndex;
+
+        public void Initialize(BattleTrainer trainer1, BattleTrainer trainer2)
         {
             this.trainer1 = trainer1;
             this.trainer2 = trainer2;
@@ -21,51 +27,105 @@ namespace PracticeMonster
             trainer2.ActionTurn = 0;
 
             battleManager = FindObjectOfType<BattleManager>();
+            state = BattleState.Start;
+
+            StartCoroutine(BattleLoop());
         }
 
         public void PrintStatus()
         {
-            Debug.Log($"Battle Status:\n{trainer1.Name}: {trainer1.GetCurrentMonster().Nickname} HP = {trainer1.GetCurrentMonster().CurrentHP}, Stamina = {trainer1.GetCurrentMonster().Stamina}, Action Turn = {trainer1.ActionTurn}\n" +
-                      $"{trainer2.Name}: {trainer2.GetCurrentMonster().Nickname} HP = {trainer2.GetCurrentMonster().CurrentHP}, Stamina = {trainer2.GetCurrentMonster().Stamina}, Action Turn = {trainer2.ActionTurn}");
+            Debug.Log($"Battle Status:\n{trainer1?.Name}: {trainer1?.GetCurrentMonster().Nickname} HP = {trainer1?.GetCurrentMonster().CurrentHP}, Stamina = {trainer1?.GetCurrentMonster().Stamina}, Action Turn = {trainer1?.ActionTurn}\n" +
+                      $"{trainer2?.Name}: {trainer2?.GetCurrentMonster().Nickname} HP = {trainer2?.GetCurrentMonster().CurrentHP}, Stamina = {trainer2?.GetCurrentMonster().Stamina}, Action Turn = {trainer2?.ActionTurn}");
         }
 
-        public IEnumerator NextTurn()
+        private IEnumerator BattleLoop()
+        {
+            while (state != BattleState.EndBattle)
+            {
+                Debug.Log("Start turn");
+                switch (state)
+                {
+                    case BattleState.Start:
+                        yield return StartCoroutine(StartTurn());
+                        break;
+                    case BattleState.SelectMove:
+                        yield return StartCoroutine(SelectMoves());
+                        break;
+                    case BattleState.ExecuteMove:
+                        yield return StartCoroutine(ExecuteMovePhase());
+                        break;
+                    case BattleState.CheckBattleEnd:
+                        yield return StartCoroutine(CheckBattleEndPhase());
+                        break;
+                    case BattleState.EndTurn:
+                        yield return new WaitForSeconds(1f);
+                        state = BattleState.Start;
+                        Debug.Log("End turn");
+                        break;
+                }
+            }
+        }
+
+        private IEnumerator StartTurn()
         {
             turnCount++;
+            PrintStatus();
 
-            // Determine who attacks first
-            BattleTrainer attacker, defender;
-            while (trainer1.ActionTurn != 0 || trainer2.ActionTurn != 0)
+            while (trainer1.ActionTurn < 0 && trainer2.ActionTurn < 0)
             {
                 IncrementActionTurns();
             }
-            DetermineAttackerAndDefender(out attacker, out defender);
 
+            state = BattleState.SelectMove;
+            yield break;
+        }
+
+        private IEnumerator SelectMoves()
+        {
+            DetermineAttackerAndDefender(out attacker, out defender);
             Monster attackMonster = attacker.GetCurrentMonster();
             Monster defenseMonster = defender.GetCurrentMonster();
 
             bool attackerMoveSelected = false;
             bool defenderActionSelected = false;
-            int attackerMoveIndex = -1;
-            int defenderActionIndex = -1;
+            attackerMoveIndex = -1;
+            defenderActionIndex = -1;
 
-            StartCoroutine(attacker.SelectMove(this, (index) => {
+            StartCoroutine(attacker.SelectMove(this, (index) =>
+            {
                 attackerMoveIndex = index;
                 attackerMoveSelected = true;
             }));
-            StartCoroutine(defender.Defend(this, (index) => {
+            StartCoroutine(defender.Defend(this, (index) =>
+            {
                 defenderActionIndex = index;
                 defenderActionSelected = true;
             }));
 
             yield return new WaitUntil(() => attackerMoveSelected && defenderActionSelected);
 
+            state = BattleState.ExecuteMove;
+        }
+
+        private IEnumerator ExecuteMovePhase()
+        {
             PrintStatus();
+
+            Monster attackMonster = attacker.GetCurrentMonster();
+            Monster defenseMonster = defender.GetCurrentMonster();
 
             Debug.Log($"Turn {turnCount}: {attackMonster.Nickname}'s turn to attack");
 
-            // Execute attack
             ExecuteMove(attacker, defender, attackerMoveIndex, defenderActionIndex);
+
+            state = BattleState.CheckBattleEnd;
+            yield break;
+        }
+
+        private IEnumerator CheckBattleEndPhase()
+        {
+            Monster attackMonster = attacker.GetCurrentMonster();
+            Monster defenseMonster = defender.GetCurrentMonster();
 
             // Check if either monster is defeated
             if (defenseMonster.CurrentHP <= 0)
@@ -74,6 +134,7 @@ namespace PracticeMonster
                 {
                     Debug.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     battleManager.EndBattle();
+                    state = BattleState.EndBattle;
                     yield break;
                 }
             }
@@ -83,9 +144,12 @@ namespace PracticeMonster
                 {
                     Debug.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     battleManager.EndBattle();
+                    state = BattleState.EndBattle;
                     yield break;
                 }
             }
+            state = BattleState.EndTurn;
+            yield break;
         }
 
         private void ExecuteMove(BattleTrainer attacker, BattleTrainer defender, int attackerMoveIndex, int defenderActionIndex)
@@ -121,7 +185,6 @@ namespace PracticeMonster
             Debug.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
 
             // Adjust action turn based on move's speed adjustment
-
         }
 
         private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)
@@ -193,6 +256,7 @@ namespace PracticeMonster
                 Debug.Log($"{trainer.Name} has no more monsters left!");
                 return false;
             }
+            Debug.Log("Switching to next Monster: " + nextMonster.Nickname);
             return true;
         }
 
@@ -202,7 +266,16 @@ namespace PracticeMonster
             trainer2.ActionTurn++;
             trainer1.GetCurrentMonster().Stamina += 2;
             trainer2.GetCurrentMonster().Stamina += 2;
+            if(trainer1.GetCurrentMonster().Stamina > 100)
+            {
+                trainer1.GetCurrentMonster().Stamina = 100;
+            }
+            if (trainer2.GetCurrentMonster().Stamina > 100)
+            {
+                trainer2.GetCurrentMonster().Stamina = 100;
+            }
         }
+
         private void DetermineAttackerAndDefender(out BattleTrainer attacker, out BattleTrainer defender)
         {
             if (trainer1.ActionTurn == 0 && trainer2.ActionTurn == 0)

@@ -42,14 +42,7 @@ namespace PracticeMonster
 
         void Start()
         {
-            moveButton1.onClick.AddListener(() => OnMoveButtonClicked(0));
-            moveButton2.onClick.AddListener(() => OnMoveButtonClicked(1));
-            moveButton3.onClick.AddListener(() => OnMoveButtonClicked(2));
-            moveButton4.onClick.AddListener(() => OnMoveButtonClicked(3));
-
-            dodgeButton.onClick.AddListener(() => OnDefenseButtonClicked(0));
-            braceButton.onClick.AddListener(() => OnDefenseButtonClicked(1));
-            standbyButton.onClick.AddListener(() => OnDefenseButtonClicked(2));
+            // Buttons will be assigned in InitializeUI
         }
 
         public void InitializeUI()
@@ -74,13 +67,29 @@ namespace PracticeMonster
             defenseSelectionPanel.SetActive(false);
         }
 
-        public void ShowMoveSelectionUI(System.Action<int> callback)
+        public void ShowMoveSelectionUI(Monster currentMonster, System.Action<int> callback)
         {
             moveSelectionPanel.SetActive(true);
-            moveButton1.onClick.AddListener(() => { callback(0); moveSelected = true; moveSelectionPanel.SetActive(false); });
-            moveButton2.onClick.AddListener(() => { callback(1); moveSelected = true; moveSelectionPanel.SetActive(false); });
-            moveButton3.onClick.AddListener(() => { callback(2); moveSelected = true; moveSelectionPanel.SetActive(false); });
-            moveButton4.onClick.AddListener(() => { callback(3); moveSelected = true; moveSelectionPanel.SetActive(false); });
+
+            // Set button names and visibility based on monster's moves
+            SetMoveButton(moveButton1, currentMonster, 0, callback);
+            SetMoveButton(moveButton2, currentMonster, 1, callback);
+            SetMoveButton(moveButton3, currentMonster, 2, callback);
+            SetMoveButton(moveButton4, currentMonster, 3, callback);
+        }
+
+        private void SetMoveButton(Button button, Monster monster, int moveIndex, System.Action<int> callback)
+        {
+            if (moveIndex < monster.Data.Moves.Count)
+            {
+                button.GetComponentInChildren<TextMeshProUGUI>().text = monster.Data.Moves[moveIndex].Name;
+                button.gameObject.SetActive(true);
+                button.onClick.AddListener(() => { callback(moveIndex); moveSelected = true; moveSelectionPanel.SetActive(false); });
+            }
+            else
+            {
+                button.gameObject.SetActive(false);
+            }
         }
 
         public void ShowDefenseSelectionUI(System.Action<int> callback)

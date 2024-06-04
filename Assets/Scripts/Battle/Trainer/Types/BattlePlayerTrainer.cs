@@ -15,7 +15,8 @@ namespace PracticeMonster
 
         public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
         {
-            BattleUIManager.Instance.ShowMoveSelectionUI(onMoveSelected);
+            Monster currentMonster = GetCurrentMonster();
+            BattleUIManager.Instance.ShowMoveSelectionUI(currentMonster, onMoveSelected);
             yield return new WaitUntil(() => BattleUIManager.Instance.IsMoveSelected());
             int selectedMoveIndex = BattleUIManager.Instance.GetSelectedMoveIndex();
             onMoveSelected(selectedMoveIndex);

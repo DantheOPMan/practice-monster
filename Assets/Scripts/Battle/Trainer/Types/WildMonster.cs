@@ -6,11 +6,8 @@ namespace PracticeMonster
 {
     public class WildMonster : BattleTrainer
     {
-        public WildMonster(Monster monster) : base(new WildMonsterData(monster))
+        public WildMonster(WildMonsterData trainerData) : base(trainerData)
         {
-            // Set the name of the WildMonster to the species name or any default name you want.
-            Name = monster.Data.Species.Name;
-            Monsters = new List<Monster> { monster };
         }
 
         public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
@@ -32,9 +29,5 @@ namespace PracticeMonster
             // WildMonster typically only has one monster, so always return the same monster
             return null;
         }
-
     }
-
-
-
 }

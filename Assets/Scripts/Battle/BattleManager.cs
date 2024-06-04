@@ -10,6 +10,7 @@ namespace PracticeMonster
         private BattleTrainer playerTrainer;
         private BattleTrainer opponentTrainer;
         private Battle battle;
+        private bool isBattleActive = false;
 
         void Start()
         {
@@ -33,8 +34,10 @@ namespace PracticeMonster
             BattleUIManager.Instance.InitializeUI();
 
             // Initialize and start the battle
-            battle = new Battle(trainer1, trainer2);
-            StartCoroutine(battle.NextTurn());
+            battle = gameObject.AddComponent<Battle>();
+
+            battle.Initialize(trainer1, trainer2);
+            isBattleActive = true;
         }
 
         public void EndBattle()
@@ -45,14 +48,18 @@ namespace PracticeMonster
                 BattleUIManager.Instance.EndBattleUI();
                 Destroy(battleUIManagerInstance);
             }
+            isBattleActive = false;
         }
 
         private void OnTriggerEnter(Collider collider)
         {
-            Debug.Log("Trigger activated");
+            if (isBattleActive)
+            {
+                Debug.Log("A battle is already in progress!");
+                return;
+            }
             if (collider.CompareTag("Trainer"))
             {
-                Debug.Log("isTrainer = true");
                 TrainerComponent trainerComponent1 = GetComponent<TrainerComponent>();
                 TrainerComponent trainerComponent2 = collider.GetComponent<TrainerComponent>();
 
@@ -61,8 +68,8 @@ namespace PracticeMonster
                     // Initialize trainers based on data
                     BattleTrainer trainer1 = CreateTrainerFromData(trainerComponent1.TrainerData);
                     BattleTrainer trainer2 = CreateTrainerFromData(trainerComponent2.TrainerData);
-
                     StartBattle(trainer1, trainer2);
+
                 }
             }
         }
@@ -75,7 +82,7 @@ namespace PracticeMonster
             }
             else if (data is WildMonsterData)
             {
-                return new BattleAITrainer((AITrainerData)data); // Assuming you use AITrainerData for wild monsters as well
+                return new WildMonster((WildMonsterData)data); // Assuming you use AITrainerData for wild monsters as well
             }
             else if (data is AITrainerData)
             {
