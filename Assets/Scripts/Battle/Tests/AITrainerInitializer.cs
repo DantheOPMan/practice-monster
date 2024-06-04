@@ -26,8 +26,8 @@ namespace PracticeMonster
             MonsterSpecies species1 = new MonsterSpecies("ElectricMouse", new Dictionary<string, int> { { "hp", 35 }, { "attack", 55 }, { "defense", 40 }, { "special_attack", 50 }, { "special_defense", 50 }, { "speed", 90 } }, electricMouseMoves, new List<string> { "Electric" }, new List<string> { "Static" }, new List<string>());
             MonsterSpecies species2 = new MonsterSpecies("RockGolem", new Dictionary<string, int> { { "hp", 40 }, { "attack", 80 }, { "defense", 100 }, { "special_attack", 30 }, { "special_defense", 30 }, { "speed", 20 } }, rockGolemMoves, new List<string> { "Rock" }, new List<string> { "Sturdy" }, new List<string>());
 
-            Monster monster1 = new Monster(species1, 5);
-            Monster monster2 = new Monster(species2, 5);
+            Monster monster1 = new Monster(species1, 25);
+            Monster monster2 = new Monster(species2, 25);
 
             List<Monster> aiMonsters = new List<Monster> { monster1, monster2 };
 

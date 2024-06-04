@@ -31,11 +31,9 @@ namespace PracticeMonster
         {
             // Instantiate the BattleUIManager prefab
             battleUIManagerInstance = Instantiate(battleUIManagerPrefab);
-            BattleUIManager.Instance.InitializeUI();
 
             // Initialize and start the battle
             battle = gameObject.AddComponent<Battle>();
-
             battle.Initialize(trainer1, trainer2);
             isBattleActive = true;
         }

@@ -29,12 +29,14 @@ namespace PracticeMonster
             battleManager = FindObjectOfType<BattleManager>();
             state = BattleState.Start;
 
+            BattleUIManager.Instance.InitializeUI(trainer1, trainer2);
+
             StartCoroutine(BattleLoop());
         }
 
         public void PrintStatus()
         {
-            Debug.Log($"Battle Status:\n{trainer1?.Name}: {trainer1?.GetCurrentMonster().Nickname} HP = {trainer1?.GetCurrentMonster().CurrentHP}, Stamina = {trainer1?.GetCurrentMonster().Stamina}, Action Turn = {trainer1?.ActionTurn}\n" +
+            BattleUIManager.Instance.Log($"Battle Status:\n{trainer1?.Name}: {trainer1?.GetCurrentMonster().Nickname} HP = {trainer1?.GetCurrentMonster().CurrentHP}, Stamina = {trainer1?.GetCurrentMonster().Stamina}, Action Turn = {trainer1?.ActionTurn}\n" +
                       $"{trainer2?.Name}: {trainer2?.GetCurrentMonster().Nickname} HP = {trainer2?.GetCurrentMonster().CurrentHP}, Stamina = {trainer2?.GetCurrentMonster().Stamina}, Action Turn = {trainer2?.ActionTurn}");
         }
 
@@ -42,14 +44,15 @@ namespace PracticeMonster
         {
             while (state != BattleState.EndBattle)
             {
-                Debug.Log("Start turn");
                 switch (state)
                 {
                     case BattleState.Start:
+                        BattleUIManager.Instance.Log("Start turn");
                         yield return StartCoroutine(StartTurn());
                         break;
                     case BattleState.SelectMove:
                         yield return StartCoroutine(SelectMoves());
+                        BattleUIManager.Instance.LogReset();
                         break;
                     case BattleState.ExecuteMove:
                         yield return StartCoroutine(ExecuteMovePhase());
@@ -58,9 +61,11 @@ namespace PracticeMonster
                         yield return StartCoroutine(CheckBattleEndPhase());
                         break;
                     case BattleState.EndTurn:
-                        yield return new WaitForSeconds(1f);
                         state = BattleState.Start;
-                        Debug.Log("End turn");
+                        BattleUIManager.Instance.Log("End turn");
+                        BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
+                        yield return new WaitForSeconds(7f);
+                        BattleUIManager.Instance.LogReset();
                         break;
                 }
             }
@@ -114,7 +119,7 @@ namespace PracticeMonster
             Monster attackMonster = attacker.GetCurrentMonster();
             Monster defenseMonster = defender.GetCurrentMonster();
 
-            Debug.Log($"Turn {turnCount}: {attackMonster.Nickname}'s turn to attack");
+            BattleUIManager.Instance.Log($"Turn {turnCount}: {attackMonster.Nickname}'s turn to attack");
 
             ExecuteMove(attacker, defender, attackerMoveIndex, defenderActionIndex);
 
@@ -132,7 +137,7 @@ namespace PracticeMonster
             {
                 if (!SwitchToNextMonster(defenseMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
-                    Debug.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
+                    BattleUIManager.Instance.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     battleManager.EndBattle();
                     state = BattleState.EndBattle;
                     yield break;
@@ -142,7 +147,7 @@ namespace PracticeMonster
             {
                 if (!SwitchToNextMonster(attackMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
-                    Debug.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
+                    BattleUIManager.Instance.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     battleManager.EndBattle();
                     state = BattleState.EndBattle;
                     yield break;
@@ -158,11 +163,12 @@ namespace PracticeMonster
             Monster defenseMonster = defender.GetCurrentMonster();
             Move selectedMove = attackMonster.Data.Moves[attackerMoveIndex];
 
-            Debug.Log($"{attackMonster.Nickname} uses {selectedMove.Name}!");
+            BattleUIManager.Instance.Log($"{attackMonster.Nickname} uses {selectedMove.Name}!");
+
 
             if (attackMonster.Stamina < selectedMove.StaminaCost)
             {
-                Debug.Log($"{attackMonster.Nickname} does not have enough stamina to use {selectedMove.Name}!");
+                BattleUIManager.Instance.Log($"{attackMonster.Nickname} does not have enough stamina to use {selectedMove.Name}!");
                 return;
             }
 
@@ -175,14 +181,14 @@ namespace PracticeMonster
             // Calculate hit probability
             if (!CalculateHit(attackMonster, defenseMonster, selectedMove, defensiveAction))
             {
-                Debug.Log($"{attackMonster.Nickname} missed with {selectedMove.Name}!");
+                BattleUIManager.Instance.Log($"{attackMonster.Nickname} missed with {selectedMove.Name}!");
                 return;
             }
 
             // Calculate damage and apply
             int damage = CalculateDamage(attackMonster, defenseMonster, selectedMove, defensiveAction);
             defenseMonster.CurrentHP -= damage;
-            Debug.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
+            BattleUIManager.Instance.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
 
             // Adjust action turn based on move's speed adjustment
         }
@@ -219,14 +225,14 @@ namespace PracticeMonster
             if (Random.value < move.CritRate)
             {
                 modifier *= 1.5f;
-                Debug.Log("Critical hit!");
+                BattleUIManager.Instance.Log("Critical hit!");
             }
 
             // Type effectiveness - for simplicity, set to 1 (you can implement type effectiveness logic here)
             float typeEffectiveness = 1;
             modifier *= typeEffectiveness;
 
-            float damage = (((100 + attacker.Data.Level) / 100) * (move.Power * modifier) * ((float)attackStat / (defensiveMultiplier * (float)defenseStat))) + 1;
+            float damage = ((((attacker.Data.Level * 2f + 10f) / 250f)) * (move.Power * modifier) * ((float)attackStat / (defensiveMultiplier * (float)defenseStat))) + 1;
             return Mathf.FloorToInt(damage);
         }
 
@@ -234,17 +240,17 @@ namespace PracticeMonster
         {
             if (index == 0 && defender.Stamina >= 30)
             {
-                Debug.Log($"{defender.Nickname} attempts to dodge!");
+                BattleUIManager.Instance.Log($"{defender.Nickname} attempts to dodge!");
                 defender.Stamina -= 30;
                 return "Dodge";
             }
             else if (index == 1 && defender.Stamina >= 25)
             {
-                Debug.Log($"{defender.Nickname} braces for impact!");
+                BattleUIManager.Instance.Log($"{defender.Nickname} braces for impact!");
                 defender.Stamina -= 25;
                 return "Brace";
             }
-            Debug.Log($"{defender.Nickname} stands by.");
+            BattleUIManager.Instance.Log($"{defender.Nickname} stands by.");
             return "Standby";
         }
 
@@ -253,10 +259,10 @@ namespace PracticeMonster
             Monster nextMonster = trainer.GetNextMonster();
             if (nextMonster == null)
             {
-                Debug.Log($"{trainer.Name} has no more monsters left!");
+                BattleUIManager.Instance.Log($"{trainer.Name} has no more monsters left!");
                 return false;
             }
-            Debug.Log("Switching to next Monster: " + nextMonster.Nickname);
+            BattleUIManager.Instance.Log("Switching to next Monster: " + nextMonster.Nickname);
             return true;
         }
 

@@ -83,11 +83,11 @@ namespace PracticeMonster
 
             if (statType == "hp")
             {
-                return Mathf.FloorToInt(((2 * baseValue + iv + (ev / 4)) * Level / 100) + Level + 10);
+                return Mathf.FloorToInt(((2f * baseValue + iv + (ev / 4)) * Level / 100) + Level + 10);
             }
             else
             {
-                return Mathf.FloorToInt(((2 * baseValue + iv + (ev / 4)) * Level / 100) + 5);
+                return Mathf.FloorToInt(((2f * baseValue + iv + (ev / 4)) * Level / 100) + 5);
             }
         }
     }

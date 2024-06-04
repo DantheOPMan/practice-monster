@@ -28,6 +28,13 @@ namespace PracticeMonster
         private int selectedMoveIndex;
         private int selectedDefenseIndex;
 
+        // References to HP sliders and name text
+        public Slider trainer1HpSlider;
+        public TextMeshProUGUI trainer1NameText;
+        public Slider trainer2HpSlider;
+        public TextMeshProUGUI trainer2NameText;
+        public TextMeshProUGUI logText; // Reference to the log text component
+
         void Awake()
         {
             if (Instance == null)
@@ -45,7 +52,7 @@ namespace PracticeMonster
             // Buttons will be assigned in InitializeUI
         }
 
-        public void InitializeUI()
+        public void InitializeUI(BattleTrainer trainer1, BattleTrainer trainer2)
         {
             // Instantiate the BattleUI prefab
             battleUIInstance = Instantiate(battleUIPrefab);
@@ -63,8 +70,37 @@ namespace PracticeMonster
             braceButton = defenseSelectionPanel.transform.Find("BraceButton").GetComponent<Button>();
             standbyButton = defenseSelectionPanel.transform.Find("StandbyButton").GetComponent<Button>();
 
+            // Find and assign HP sliders and name texts
+            trainer1HpSlider = battleUIInstance.transform.Find("Trainer1HpSlider").GetComponent<Slider>();
+            trainer1NameText = battleUIInstance.transform.Find("Trainer1NameText").GetComponent<TextMeshProUGUI>();
+            trainer2HpSlider = battleUIInstance.transform.Find("Trainer2HpSlider").GetComponent<Slider>();
+            trainer2NameText = battleUIInstance.transform.Find("Trainer2NameText").GetComponent<TextMeshProUGUI>();
+
             moveSelectionPanel.SetActive(false);
             defenseSelectionPanel.SetActive(false);
+
+            // Set initial HP and names
+            UpdateHpSlider(trainer1HpSlider, trainer1.GetCurrentMonster().CurrentHP, trainer1.GetCurrentMonster().Data.MaxHP);
+            trainer1NameText.text = trainer1.GetCurrentMonster().Nickname;
+
+            UpdateHpSlider(trainer2HpSlider, trainer2.GetCurrentMonster().CurrentHP, trainer2.GetCurrentMonster().Data.MaxHP);
+            trainer2NameText.text = trainer2.GetCurrentMonster().Nickname;
+
+            logText = battleUIInstance.transform.Find("LogText").GetComponent<TextMeshProUGUI>();
+        }
+
+        private void SetMoveButton(Button button, Monster monster, int moveIndex, System.Action<int> callback)
+        {
+            if (moveIndex < monster.Data.Moves.Count)
+            {
+                button.GetComponentInChildren<TextMeshProUGUI>().text = monster.Data.Moves[moveIndex].Name;
+                button.gameObject.SetActive(true);
+                button.onClick.AddListener(() => { callback(moveIndex); moveSelected = true; selectedMoveIndex = moveIndex; moveSelectionPanel.SetActive(false); });
+            }
+            else
+            {
+                button.gameObject.SetActive(false);
+            }
         }
 
         public void ShowMoveSelectionUI(Monster currentMonster, System.Action<int> callback)
@@ -78,27 +114,58 @@ namespace PracticeMonster
             SetMoveButton(moveButton4, currentMonster, 3, callback);
         }
 
-        private void SetMoveButton(Button button, Monster monster, int moveIndex, System.Action<int> callback)
-        {
-            if (moveIndex < monster.Data.Moves.Count)
-            {
-                button.GetComponentInChildren<TextMeshProUGUI>().text = monster.Data.Moves[moveIndex].Name;
-                button.gameObject.SetActive(true);
-                button.onClick.AddListener(() => { callback(moveIndex); moveSelected = true; moveSelectionPanel.SetActive(false); });
-            }
-            else
-            {
-                button.gameObject.SetActive(false);
-            }
-        }
-
         public void ShowDefenseSelectionUI(System.Action<int> callback)
         {
             defenseSelectionPanel.SetActive(true);
-            dodgeButton.onClick.AddListener(() => { callback(0); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
-            braceButton.onClick.AddListener(() => { callback(1); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
-            standbyButton.onClick.AddListener(() => { callback(2); defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+
+            // Remove all previous listeners to prevent multiple invocations
+            dodgeButton.onClick.RemoveAllListeners();
+            braceButton.onClick.RemoveAllListeners();
+            standbyButton.onClick.RemoveAllListeners();
+
+            // Add new listeners
+            dodgeButton.onClick.AddListener(() => { callback(0); selectedDefenseIndex = 0; defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+            braceButton.onClick.AddListener(() => { callback(1); selectedDefenseIndex = 1;  defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+            standbyButton.onClick.AddListener(() => { callback(2); selectedDefenseIndex = 2; defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
         }
+
+
+        public void UpdateHpSlider(Slider hpSlider, int currentHP, int maxHP)
+        {
+            hpSlider.maxValue = maxHP;
+            hpSlider.value = currentHP;
+        }
+
+        public void UpdateMonsterName(TextMeshProUGUI nameText, string name)
+        {
+            nameText.text = name;
+        }
+
+        public void UpdateBattleUI(BattleTrainer trainer1, BattleTrainer trainer2)
+        {
+            UpdateHpSlider(trainer1HpSlider, trainer1.GetCurrentMonster().CurrentHP, trainer1.GetCurrentMonster().Data.MaxHP);
+            trainer1NameText.text = trainer1.GetCurrentMonster().Nickname;
+
+            UpdateHpSlider(trainer2HpSlider, trainer2.GetCurrentMonster().CurrentHP, trainer2.GetCurrentMonster().Data.MaxHP);
+            trainer2NameText.text = trainer2.GetCurrentMonster().Nickname;
+        }
+        public void Log(string message)
+        {
+            logText.text += message + "\n";
+        }
+        public void LogReset()
+        {
+            logText.text ="";
+        }
+
+        public void EndBattleUI()
+        {
+            if (battleUIInstance != null)
+            {
+                Destroy(battleUIInstance);
+            }
+        }
+
 
         private void OnMoveButtonClicked(int index)
         {
@@ -132,14 +199,6 @@ namespace PracticeMonster
         {
             defenseActionSelected = false;
             return selectedDefenseIndex;
-        }
-
-        public void EndBattleUI()
-        {
-            if (battleUIInstance != null)
-            {
-                Destroy(battleUIInstance);
-            }
         }
     }
 }

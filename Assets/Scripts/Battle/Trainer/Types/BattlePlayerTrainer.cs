@@ -28,6 +28,7 @@ namespace PracticeMonster
             yield return new WaitUntil(() => BattleUIManager.Instance.IsDefenseActionSelected());
             int selectedDefenseIndex = BattleUIManager.Instance.GetSelectedDefenseIndex();
             onDefenseSelected(selectedDefenseIndex);
+            Debug.Log(selectedDefenseIndex);
         }
 
         public override Monster GetNextMonster()
