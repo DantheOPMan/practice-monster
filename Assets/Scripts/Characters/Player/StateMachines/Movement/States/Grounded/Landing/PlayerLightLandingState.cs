@@ -33,6 +33,17 @@ namespace PracticeMonster
 
             OnMove();
         }
+        public override void PhysicsUpdate()
+        {
+            base.PhysicsUpdate();
+
+            if (!IsMovingHorizontally())
+            {
+                return;
+            }
+
+            ResetVelocity();
+        }
 
         public override void OnAnimationTransitionEvent()
         {

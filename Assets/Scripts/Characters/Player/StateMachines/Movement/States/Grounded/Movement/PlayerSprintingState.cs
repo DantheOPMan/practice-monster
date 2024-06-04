@@ -16,7 +16,7 @@ namespace PracticeMonster
         private bool shouldResetSprintState;
         public PlayerSprintingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
-            sprintData = movementData.SprintData;
+            sprintData = groundedData.SprintData;
         }
         #region IState Method
         public override void Enter()
@@ -24,6 +24,8 @@ namespace PracticeMonster
             stateMachine.ReusableData.MovementSpeedModifier = sprintData.SpeedModifier;
 
             base.Enter();
+
+            StartAnimation(stateMachine.Player.AnimationData.SprintParameterHash);
 
             stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.StrongForce;
 
@@ -35,6 +37,8 @@ namespace PracticeMonster
         public override void Exit()
         {
             base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.SprintParameterHash);
 
             if (shouldResetSprintState)
             {

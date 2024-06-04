@@ -11,7 +11,7 @@ namespace PracticeMonster
         private PlayerIdleData idleData;
         public PlayerIdlingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
-            idleData = movementData.IdleData;
+            idleData = groundedData.IdleData;
         }
         #region IState Methods
         public override void Enter()
@@ -22,9 +22,18 @@ namespace PracticeMonster
 
             base.Enter();
 
+            StartAnimation(stateMachine.Player.AnimationData.IdleParameterHash);
+
             stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.WeakForce;
 
             ResetVelocity();
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.IdleParameterHash);
         }
 
         public override void Update()
@@ -37,8 +46,19 @@ namespace PracticeMonster
             }
             OnMove();
         }
+        public override void PhysicsUpdate()
+        {
+            base.PhysicsUpdate();
 
-        
+            if (!IsMovingHorizontally())
+            {
+                return;
+            }
+
+            ResetVelocity();
+        }
+
+
         #endregion
     }
 }

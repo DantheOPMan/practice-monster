@@ -9,13 +9,13 @@ namespace PracticeMonster
     {
         protected PlayerMovementStateMachine stateMachine;
 
-        protected PlayerGroundedData movementData;
+        protected PlayerGroundedData groundedData;
         protected PlayerAirborneData airborneData;
         
         public PlayerMovementState(PlayerMovementStateMachine playerMovementstateMachine)
         {
             stateMachine = playerMovementstateMachine;
-            movementData = stateMachine.Player.Data.GroundedData;
+            groundedData = stateMachine.Player.Data.GroundedData;
             airborneData = stateMachine.Player.Data.AirborneData;
 
             SetBaseCameraRecenteringData();
@@ -152,6 +152,15 @@ namespace PracticeMonster
         #endregion
 
         #region Reusable Methods
+        protected void StartAnimation(int animationHash)
+        {
+            stateMachine.Player.Animator.SetBool(animationHash, true);
+        }
+
+        protected void StopAnimation(int animationHash)
+        {
+            stateMachine.Player.Animator.SetBool(animationHash, false);
+        }
         protected virtual void AddInputActionsCallbacks()
         {
             stateMachine.Player.Input.PlayerActions.WalkToggle.started += OnWalkToggleStarted;
@@ -162,8 +171,6 @@ namespace PracticeMonster
 
             stateMachine.Player.Input.PlayerActions.Movement.canceled += OnMovementCanceled;
         }
-
-        
 
         protected virtual void RemoveInputActionsCallbacks()
         {
@@ -177,21 +184,27 @@ namespace PracticeMonster
         }
         protected void SetBaseCameraRecenteringData()
         {
-            stateMachine.ReusableData.BackwardsCameraRecenteringData = movementData.BackwardsCameraRecenteringData;
-            stateMachine.ReusableData.SidewaysCameraRecenteringData = movementData.SidewaysCameraRecenteringData;
+            stateMachine.ReusableData.BackwardsCameraRecenteringData = groundedData.BackwardsCameraRecenteringData;
+            stateMachine.ReusableData.SidewaysCameraRecenteringData = groundedData.SidewaysCameraRecenteringData;
         }
         protected void SetBaseRotationData()
         {
-            stateMachine.ReusableData.RotationData = movementData.BaseRotationData;
-            stateMachine.ReusableData.TimeToReachTargetRotation = movementData.BaseRotationData.TargetRotationReachTime;
+            stateMachine.ReusableData.RotationData = groundedData.BaseRotationData;
+            stateMachine.ReusableData.TimeToReachTargetRotation = groundedData.BaseRotationData.TargetRotationReachTime;
         }
         protected Vector3 GetMovementInputDirection()
         {
             return new Vector3(stateMachine.ReusableData.MovementInput.x, 0f, stateMachine.ReusableData.MovementInput.y);
         }
-        protected float GetMovementSpeed()
+        protected float GetMovementSpeed(bool shouldConsiderSlopes = true)
         {
-            return movementData.BaseSpeed * stateMachine.ReusableData.MovementSpeedModifier * stateMachine.ReusableData.MovementOnSlopesSpeedModifier;
+            float movementSpeed = groundedData.BaseSpeed * stateMachine.ReusableData.MovementSpeedModifier;
+
+            if (shouldConsiderSlopes)
+            {
+                movementSpeed *= stateMachine.ReusableData.MovementOnSlopesSpeedModifier;
+            }
+            return movementSpeed;
         }
         protected Vector3 GetPlayerHorizontalVelocity()
         {
@@ -329,10 +342,10 @@ namespace PracticeMonster
 
             if(movementSpeed == 0f)
             {
-                movementSpeed = movementData.BaseSpeed;
+                movementSpeed = groundedData.BaseSpeed;
             }
 
-            stateMachine.Player.CameraUtility.EnableRecentering(waitTime, recenteringTime, movementData.BaseSpeed, movementSpeed);
+            stateMachine.Player.CameraUtility.EnableRecentering(waitTime, recenteringTime, groundedData.BaseSpeed, movementSpeed);
         }
 
         protected void DisableCameraRecentering()

@@ -193,17 +193,6 @@
                 },
                 {
                     "name": "",
-                    "id": "fce3a48b-13ca-4cb3-9ea6-74c6f9d3757c",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Dash",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "f79c4652-e15e-4fc5-b869-24de71007556",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",

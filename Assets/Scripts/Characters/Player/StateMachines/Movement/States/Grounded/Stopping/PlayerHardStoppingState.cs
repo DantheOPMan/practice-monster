@@ -14,8 +14,18 @@ namespace PracticeMonster
         {
             base.Enter();
 
-            stateMachine.ReusableData.MovementDecelerationForce = movementData.StopData.HardDecelerationForce;
+            StartAnimation(stateMachine.Player.AnimationData.HardStopParameterHash);
+
+            stateMachine.ReusableData.MovementDecelerationForce = groundedData.StopData.HardDecelerationForce;
+
             stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.StrongForce;
+
+        }
+        public override void Exit()
+        {
+            base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.HardStopParameterHash);
 
         }
         #endregion

@@ -10,7 +10,7 @@ namespace PracticeMonster
         private PlayerRollData rollData;
         public PlayerRollingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
-            rollData = movementData.RollData;
+            rollData = groundedData.RollData;
         }
         #region IState Methods
         public override void Enter()
@@ -19,8 +19,17 @@ namespace PracticeMonster
 
             base.Enter();
 
+            StartAnimation(stateMachine.Player.AnimationData.RollParameterHash);
+
             stateMachine.ReusableData.ShouldSprint = false;
         }
+
+        public override void Exit()
+        {
+            base.Exit();
+            StopAnimation(stateMachine.Player.AnimationData.RollParameterHash);
+        }
+
         public override void PhysicsUpdate()
         {
             base.PhysicsUpdate();

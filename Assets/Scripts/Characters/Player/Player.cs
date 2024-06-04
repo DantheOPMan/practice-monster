@@ -15,7 +15,11 @@ namespace PracticeMonster
         [field: Header("Cameras")]
         [field: SerializeField] public PlayerCameraUtility CameraUtility { get; private set; }
 
+        [field: Header("Animations")]
+        [field:SerializeField] public PlayerAnimationData AnimationData { get; private set; }
+
         public Rigidbody Rigidbody { get; private set; }
+        public Animator Animator { get; private set; }
         public Transform MainCameraTransform { get; private set; }
         public PlayerInput Input { get; private set; }
 
@@ -23,12 +27,13 @@ namespace PracticeMonster
         private void Awake()
         {
             Rigidbody = GetComponent<Rigidbody>();
-
+            Animator = GetComponentInChildren<Animator>();
             Input = GetComponent<PlayerInput>();
 
             ColliderUtility.Initialize(gameObject);
             ColliderUtility.CalculateCapsuleColliderDimensions();
             CameraUtility.Initialize();
+            AnimationData.Initialize();
 
             MainCameraTransform = Camera.main.transform;
             
@@ -65,6 +70,19 @@ namespace PracticeMonster
         private void FixedUpdate()
         {
             movementStateMachine.PhysicsUpdate();
+        }
+
+        public void OnMoveStateAnimationEnterEvent()
+        {
+            movementStateMachine.OnAnimationEnterEvent();
+        }
+        public void OnMoveStateAnimationExitEvent()
+        {
+            movementStateMachine.OnAnimationExitEvent();
+        }
+        public void OnMoveStateAnimationTransitionEvent()
+        {
+            movementStateMachine.OnAnimationTransitionEvent();
         }
     }
 }

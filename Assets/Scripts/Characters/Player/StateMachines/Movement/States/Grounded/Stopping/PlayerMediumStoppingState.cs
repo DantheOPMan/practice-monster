@@ -15,10 +15,19 @@ namespace PracticeMonster
         {
             base.Enter();
 
-            stateMachine.ReusableData.MovementDecelerationForce = movementData.StopData.MediumDecelerationForce;
+            StartAnimation(stateMachine.Player.AnimationData.MediumStopParameterHash);
 
-            stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.WeakForce;
+            stateMachine.ReusableData.MovementDecelerationForce = groundedData.StopData.MediumDecelerationForce;
 
+            stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.MediumForce;
+
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.MediumStopParameterHash);
         }
         #endregion
     }

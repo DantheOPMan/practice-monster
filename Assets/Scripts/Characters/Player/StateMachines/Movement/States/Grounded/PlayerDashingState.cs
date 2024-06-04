@@ -18,7 +18,7 @@ namespace PracticeMonster
 
         public PlayerDashingState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
-            dashData = movementData.DashData;
+            dashData = groundedData.DashData;
         }
         #region IState Methods
         public override void Enter()
@@ -27,9 +27,11 @@ namespace PracticeMonster
 
             base.Enter();
 
+            StartAnimation(stateMachine.Player.AnimationData.DashParameterHash);
+
             stateMachine.ReusableData.RotationData = dashData.RotationData;
             
-            AddForceOnTransitionFromStationaryState();
+            Dash();
 
             shouldKeepRotating = stateMachine.ReusableData.MovementInput != Vector2.zero;
 
@@ -41,6 +43,8 @@ namespace PracticeMonster
         public override void Exit()
         {
             base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.DashParameterHash);
 
             SetBaseRotationData();
         }
@@ -69,19 +73,23 @@ namespace PracticeMonster
         #endregion
 
         #region Main Method
-        private void AddForceOnTransitionFromStationaryState()
+        private void Dash()
         {
-            if(stateMachine.ReusableData.MovementInput != Vector2.zero)
+            Vector3 dashDirection = stateMachine.Player.transform.forward;
+
+            dashDirection.y = 0f;
+
+            UpdateTargetRotation(dashDirection, false);
+
+            if (stateMachine.ReusableData.MovementInput != Vector2.zero)
             {
-                return;
+                UpdateTargetRotation(GetMovementInputDirection());
+
+                dashDirection = GetTargetRotationDirection(stateMachine.ReusableData.CurrentTargetRotation.y);
             }
-            Vector3 characterRotationDirection = stateMachine.Player.transform.forward;
+            
 
-            characterRotationDirection. y = 0f;
-
-            UpdateTargetRotation(characterRotationDirection, false);
-
-            stateMachine.Player.Rigidbody.velocity = characterRotationDirection * GetMovementSpeed();
+            stateMachine.Player.Rigidbody.velocity = dashDirection * GetMovementSpeed(false);
         }
         private void UpdateConsecutiveDashes()
         {

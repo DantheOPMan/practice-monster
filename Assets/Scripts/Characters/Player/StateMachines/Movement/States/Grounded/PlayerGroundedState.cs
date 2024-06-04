@@ -17,9 +17,18 @@ namespace PracticeMonster
         {
             base.Enter();
 
+            StartAnimation(stateMachine.Player.AnimationData.GroundedParameterHash);
+
             UpdateShouldSprintState();
 
             UpdateCameraRecenteringState(stateMachine.ReusableData.MovementInput);
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.GroundedParameterHash);
         }
 
         public override void PhysicsUpdate()
@@ -76,7 +85,7 @@ namespace PracticeMonster
         }
         private float SetSlopeSpeedModifierOnAngle(float angle)
         {
-            float slopeSpeedModifier = movementData.SlopeSpeedAngles.Evaluate(angle);
+            float slopeSpeedModifier = groundedData.SlopeSpeedAngles.Evaluate(angle);
 
             if (stateMachine.ReusableData.MovementOnSlopesSpeedModifier != slopeSpeedModifier)
             {
@@ -94,7 +103,7 @@ namespace PracticeMonster
             BoxCollider groundCheckCollider = stateMachine.Player.ColliderUtility.TriggerColliderData.GroundCheckCollider;
             Vector3 groundColliderCenterInWorldSpace = groundCheckCollider.bounds.center;
 
-            Collider[] overlappedGroundColliders = Physics.OverlapBox(groundColliderCenterInWorldSpace, groundCheckCollider.bounds.extents, groundCheckCollider.transform.rotation, stateMachine.Player.LayerData.GroundLayer, QueryTriggerInteraction.Ignore);
+            Collider[] overlappedGroundColliders = Physics.OverlapBox(groundColliderCenterInWorldSpace, stateMachine.Player.ColliderUtility.TriggerColliderData.GroundCheckColliderExtents, groundCheckCollider.transform.rotation, stateMachine.Player.LayerData.GroundLayer, QueryTriggerInteraction.Ignore);
             return overlappedGroundColliders.Length > 0;
         }
         #endregion
@@ -150,7 +159,7 @@ namespace PracticeMonster
 
             Ray downwardsRayFromCapsuleBottom = new Ray(capsuleColliderCenterInWorldSpace -stateMachine.Player.ColliderUtility.CapsuleColliderData.ColliderVerticalExtents, Vector3.down);
 
-            if(!Physics.Raycast(downwardsRayFromCapsuleBottom, out _, movementData.GroundToFallRayDistance, stateMachine.Player.LayerData.GroundLayer, QueryTriggerInteraction.Ignore))
+            if(!Physics.Raycast(downwardsRayFromCapsuleBottom, out _, groundedData.GroundToFallRayDistance, stateMachine.Player.LayerData.GroundLayer, QueryTriggerInteraction.Ignore))
             {
                 OnFall();
             }

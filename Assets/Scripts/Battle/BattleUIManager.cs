@@ -1,74 +1,144 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BattleUIManager : MonoBehaviour
+namespace PracticeMonster
 {
-    public Slider monster1HealthBar;
-    public Slider monster2HealthBar;
-    public Text battleMessageText;
-    public Button moveButton1;
-    public Button moveButton2;
-    public Button moveButton3;
-    public Button moveButton4;
-
-    private Monster playerMonster;
-    private Monster aiMonster;
-    private Battle battle;
-
-    void Start()
+    public class BattleUIManager : MonoBehaviour
     {
-        // Assume battle is assigned or find it in the scene
-        battle = FindObjectOfType<Battle>();
-        UpdateHealthBars();
-        UpdateMoveButtons();
-        battleMessageText.text = "Battle Start!";
-    }
+        public static BattleUIManager Instance;
 
-    public void SetMonsters(Monster player, Monster ai)
-    {
-        playerMonster = player;
-        aiMonster = ai;
-        monster1HealthBar.maxValue = playerMonster.maxHp;
-        monster2HealthBar.maxValue = aiMonster.maxHp;
-        UpdateHealthBars();
-    }
+        public Button moveButton1;
+        public Button moveButton2;
+        public Button moveButton3;
+        public Button moveButton4;
 
-    void UpdateHealthBars()
-    {
-        monster1HealthBar.value = playerMonster.hp;
-        monster2HealthBar.value = aiMonster.hp;
-    }
+        public Button dodgeButton;
+        public Button braceButton;
+        public Button standbyButton;
 
-    void UpdateMoveButtons()
-    {
-        moveButton1.GetComponentInChildren<Text>().text = playerMonster.moves[0].name;
-        moveButton2.GetComponentInChildren<Text>().text = playerMonster.moves[1].name;
-        moveButton3.GetComponentInChildren<Text>().text = playerMonster.moves[2].name;
-        moveButton4.GetComponentInChildren<Text>().text = playerMonster.moves[3].name;
-    }
+        public GameObject moveSelectionPanel;
+        public GameObject defenseSelectionPanel;
 
-    /*public void OnMoveButton1()
-    {
-        battle.PlayerChooseMove(playerMonster.moves[0]);
-    }
+        public GameObject battleUIPrefab; // Reference to the BattleUI prefab
+        private GameObject battleUIInstance;
 
-    public void OnMoveButton2()
-    {
-        battle.PlayerChooseMove(playerMonster.moves[1]);
-    }
+        private bool moveSelected = false;
+        private bool defenseActionSelected = false;
+        private int selectedMoveIndex;
+        private int selectedDefenseIndex;
 
-    public void OnMoveButton3()
-    {
-        battle.PlayerChooseMove(playerMonster.moves[2]);
-    }
+        void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
 
-    public void OnMoveButton4()
-    {
-        battle.PlayerChooseMove(playerMonster.moves[3]);
-    }*/
+        void Start()
+        {
+            moveButton1.onClick.AddListener(() => OnMoveButtonClicked(0));
+            moveButton2.onClick.AddListener(() => OnMoveButtonClicked(1));
+            moveButton3.onClick.AddListener(() => OnMoveButtonClicked(2));
+            moveButton4.onClick.AddListener(() => OnMoveButtonClicked(3));
 
-    public void DisplayMessage(string message)
-    {
-        battleMessageText.text = message;
+            dodgeButton.onClick.AddListener(() => OnDefenseButtonClicked(0));
+            braceButton.onClick.AddListener(() => OnDefenseButtonClicked(1));
+            standbyButton.onClick.AddListener(() => OnDefenseButtonClicked(2));
+        }
+
+        public void InitializeUI()
+        {
+            // Instantiate the BattleUI prefab
+            battleUIInstance = Instantiate(battleUIPrefab);
+
+            // Assign the instantiated UI elements to the script variables
+            moveSelectionPanel = battleUIInstance.transform.Find("MoveSelectionPanel").gameObject;
+            defenseSelectionPanel = battleUIInstance.transform.Find("DefenseSelectionPanel").gameObject;
+
+            moveButton1 = moveSelectionPanel.transform.Find("MoveButton1").GetComponent<Button>();
+            moveButton2 = moveSelectionPanel.transform.Find("MoveButton2").GetComponent<Button>();
+            moveButton3 = moveSelectionPanel.transform.Find("MoveButton3").GetComponent<Button>();
+            moveButton4 = moveSelectionPanel.transform.Find("MoveButton4").GetComponent<Button>();
+
+            dodgeButton = defenseSelectionPanel.transform.Find("DodgeButton").GetComponent<Button>();
+            braceButton = defenseSelectionPanel.transform.Find("BraceButton").GetComponent<Button>();
+            standbyButton = defenseSelectionPanel.transform.Find("StandbyButton").GetComponent<Button>();
+        }
+
+        public void ShowMoveSelectionUI(System.Action<int> callback)
+        {
+            moveSelectionPanel.SetActive(true);
+            moveButton1.onClick.AddListener(() => { callback(0); moveSelected = true; HideMoveSelectionUI(); });
+            moveButton2.onClick.AddListener(() => { callback(1); moveSelected = true; HideMoveSelectionUI(); });
+            moveButton3.onClick.AddListener(() => { callback(2); moveSelected = true; HideMoveSelectionUI(); });
+            moveButton4.onClick.AddListener(() => { callback(3); moveSelected = true; HideMoveSelectionUI(); });
+        }
+
+        public void ShowDefenseSelectionUI(System.Action<int> callback)
+        {
+            defenseSelectionPanel.SetActive(true);
+            dodgeButton.onClick.AddListener(() => { callback(0); defenseActionSelected = true; HideDefenseSelectionUI(); });
+            braceButton.onClick.AddListener(() => { callback(1); defenseActionSelected = true; HideDefenseSelectionUI(); });
+            standbyButton.onClick.AddListener(() => { callback(2); defenseActionSelected = true; HideDefenseSelectionUI(); });
+        }
+
+        private void HideMoveSelectionUI()
+        {
+            moveSelectionPanel.SetActive(false);
+        }
+
+        private void HideDefenseSelectionUI()
+        {
+            defenseSelectionPanel.SetActive(false);
+        }
+
+        private void OnMoveButtonClicked(int index)
+        {
+            selectedMoveIndex = index;
+            moveSelected = true;
+            HideMoveSelectionUI();
+        }
+
+        private void OnDefenseButtonClicked(int index)
+        {
+            selectedDefenseIndex = index;
+            defenseActionSelected = true;
+            HideDefenseSelectionUI();
+        }
+
+        public bool IsMoveSelected()
+        {
+            return moveSelected;
+        }
+
+        public int GetSelectedMoveIndex()
+        {
+            moveSelected = false;
+            return selectedMoveIndex;
+        }
+
+        public bool IsDefenseActionSelected()
+        {
+            return defenseActionSelected;
+        }
+
+        public int GetSelectedDefenseIndex()
+        {
+            defenseActionSelected = false;
+            return selectedDefenseIndex;
+        }
+
+        public void EndBattleUI()
+        {
+            if (battleUIInstance != null)
+            {
+                Destroy(battleUIInstance);
+            }
+        }
     }
 }

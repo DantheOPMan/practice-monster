@@ -13,20 +13,28 @@ namespace PracticeMonster
         private float startTime;
         public PlayerRunningState(PlayerMovementStateMachine playerMovementstateMachine) : base(playerMovementstateMachine)
         {
-            sprintData = movementData.SprintData;
+            sprintData = groundedData.SprintData;
         }
 
         #region IState Methods
         public override void Enter()
         {
-            stateMachine.ReusableData.MovementSpeedModifier = movementData.RunData.SpeedModifier;
+            stateMachine.ReusableData.MovementSpeedModifier = groundedData.RunData.SpeedModifier;
 
             base.Enter();
 
+            StartAnimation(stateMachine.Player.AnimationData.RunParameterHash);
 
             stateMachine.ReusableData.CurrentJumpForce = airborneData.JumpData.MediumForce;
 
             startTime = Time.time;
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+
+            StopAnimation(stateMachine.Player.AnimationData.RunParameterHash);
         }
 
         public override void Update()
@@ -52,7 +60,7 @@ namespace PracticeMonster
         {
             if (stateMachine.ReusableData.MovementInput == Vector2.zero)
             {
-                stateMachine.ChangeState(stateMachine.MediumStoppingState);
+                stateMachine.ChangeState(stateMachine.IdlingState);
                 return;
             }
             stateMachine.ChangeState(stateMachine.WalkingState);

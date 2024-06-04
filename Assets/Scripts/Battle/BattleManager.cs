@@ -1,27 +1,40 @@
 using UnityEngine;
 
-public class BattleManager : MonoBehaviour
+namespace PracticeMonster
 {
-    public GameObject battleUIPanel;
-
-    private void OnTriggerEnter(Collider other)
+    public class BattleManager : MonoBehaviour
     {
-        if (other.CompareTag("AI"))
-        {
-            StartBattle();
-        }
-    }
+        public GameObject battleUIManagerPrefab; // Reference to the BattleUIManager prefab
+        private GameObject battleUIManagerInstance;
 
-    void StartBattle()
-    {
-        Debug.Log("Battle Started!");
+        private BattlePlayerTrainer playerTrainer;
+        private BattleTrainer opponentTrainer;
+        private Battle battle;
 
-        // Activate the battle UI panel
-        if (battleUIPanel != null)
+        void Start()
         {
-            battleUIPanel.SetActive(true);
+            // Initialize playerTrainer and opponentTrainer as needed
         }
 
-        // Additional logic to start the battle can go here
+        public void StartBattle()
+        {
+            // Instantiate the BattleUIManager prefab
+            battleUIManagerInstance = Instantiate(battleUIManagerPrefab);
+            BattleUIManager.Instance.InitializeUI();
+
+            // Initialize and start the battle
+            battle = new Battle(playerTrainer, opponentTrainer);
+            StartCoroutine(battle.NextTurn());
+        }
+
+        public void EndBattle()
+        {
+            // Clean up after the battle
+            if (battleUIManagerInstance != null)
+            {
+                BattleUIManager.Instance.EndBattleUI();
+                Destroy(battleUIManagerInstance);
+            }
+        }
     }
 }
