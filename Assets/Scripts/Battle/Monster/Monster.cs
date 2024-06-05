@@ -46,11 +46,10 @@ namespace PracticeMonster
             }
 
             InitializeStats();
-            InitializeBattleState();
         }
 
         #region Initialization Methods
-        private void InitializeStats()
+        public void InitializeStats()
         {
             CurrentHP = Data.MaxHP;
             CurrentAttack = Data.Attack;
@@ -58,6 +57,7 @@ namespace PracticeMonster
             CurrentSpecialAttack = Data.SpecialAttack;
             CurrentSpecialDefense = Data.SpecialDefense;
             CurrentSpeed = Data.Speed;
+            InitializeBattleState();
         }
 
         public void InitializeBattleState()
@@ -70,6 +70,7 @@ namespace PracticeMonster
             SpecialAttackStage = 0;
             SpecialDefenseStage = 0;
             SpeedStage = 0;
+            UpdateCurrentStats();
         }
         #endregion
 
@@ -257,14 +258,38 @@ namespace PracticeMonster
 
             if (stage > 0)
                 return Mathf.FloorToInt(((2f + stageFloat) / 2f) * baseStatFloat);
+            else if (stage < 0)
+                return Mathf.FloorToInt((2f / (2f + stageFloat)) * baseStatFloat);
             else
-                return Mathf.FloorToInt((2f / (2f + stageFloat))* baseStatFloat);
+                return baseStat;
         }
         public void GainEVs(Monster loser)
         {
+            int totalEVs = 0;
+            foreach (var ev in Data.EVs)
+            {
+                totalEVs += ev.Value;
+            }
+
             foreach (var ev in loser.Data.Species.EVs)
             {
-                Data.EVs[ev.Key] += ev.Value;
+                if (totalEVs >= 1000)
+                {
+                    break;
+                }
+
+                int availableEVSpace = 1000 - totalEVs;
+                int evGain = Mathf.Min(ev.Value, availableEVSpace);
+                Data.EVs[ev.Key] += evGain;
+
+                if (Data.EVs[ev.Key] > 450)
+                {
+                    int excessEVs = Data.EVs[ev.Key] - 450;
+                    Data.EVs[ev.Key] = 450;
+                    evGain -= excessEVs;
+                }
+
+                totalEVs += evGain;
                 BattleUIManager.Instance.Log($"{Nickname} gained {ev.Value} {ev.Key} EV(s)!");
             }
         }

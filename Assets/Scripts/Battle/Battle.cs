@@ -30,8 +30,16 @@ namespace PracticeMonster
             state = BattleState.Start;
 
             BattleUIManager.Instance.InitializeUI(trainer1, trainer2);
-
+            InitializeTrainerMonsters(trainer1);
+            InitializeTrainerMonsters(trainer2);
             StartCoroutine(BattleLoop());
+        }
+        private void InitializeTrainerMonsters(BattleTrainer trainer)
+        {
+            foreach (var monster in trainer.Monsters)
+            {
+                monster.InitializeBattleState();
+            }
         }
 
         public void PrintStatus()
@@ -138,6 +146,7 @@ namespace PracticeMonster
                        
                 if (!SwitchToNextMonster(defenseMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
+                    BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
                     BattleUIManager.Instance.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     yield return new WaitForSeconds(7);
                     battleManager.EndBattle();
@@ -152,6 +161,7 @@ namespace PracticeMonster
            
                 if (!SwitchToNextMonster(attackMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
+                    BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
                     BattleUIManager.Instance.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     yield return new WaitForSeconds(7);
                     battleManager.EndBattle();
@@ -199,7 +209,6 @@ namespace PracticeMonster
             defenseMonster.CurrentHP -= damage;
             BattleUIManager.Instance.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
 
-            // Adjust action turn based on move's speed adjustment
         }
 
         private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)

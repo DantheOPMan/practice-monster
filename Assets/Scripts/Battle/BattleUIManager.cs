@@ -181,13 +181,13 @@ namespace PracticeMonster
         {
             UpdateHpSlider(trainer1HpSlider, trainer1HpText, trainer1.GetCurrentMonster().CurrentHP, trainer1.GetCurrentMonster().Data.MaxHP);
             UpdateStaminaSlider(trainer1StaminaSlider, trainer1StaminaText, trainer1.GetCurrentMonster().Stamina);
-            UpdateXpSlider(trainer1XpSlider, trainer1XpText, trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level) - trainer1.GetCurrentMonster().Data.CurrentExperience, trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level) - (trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level-1)));
+            UpdateXpSlider(trainer1XpSlider, trainer1XpText,  trainer1.GetCurrentMonster().Data.CurrentExperience - trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level-1), trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level) - (trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level-1)));
             trainer1LevelText.text = "Lvl " + trainer1.GetCurrentMonster().Data.Level.ToString();
             trainer1NameText.text = trainer1.GetCurrentMonster().Nickname;
 
             UpdateHpSlider(trainer2HpSlider, trainer2HpText, trainer2.GetCurrentMonster().CurrentHP, trainer2.GetCurrentMonster().Data.MaxHP);
             UpdateStaminaSlider(trainer2StaminaSlider, trainer2StaminaText, trainer2.GetCurrentMonster().Stamina);
-            UpdateXpSlider(trainer2XpSlider, trainer2XpText, trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level) - trainer2.GetCurrentMonster().Data.CurrentExperience, trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level) - (trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level - 1)));
+            UpdateXpSlider(trainer2XpSlider, trainer2XpText, trainer2.GetCurrentMonster().Data.CurrentExperience - trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level-1), trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level) - (trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level - 1)));
             trainer2LevelText.text = "Lvl " + trainer2.GetCurrentMonster().Data.Level.ToString();
             trainer2NameText.text = trainer2.GetCurrentMonster().Nickname;
         }

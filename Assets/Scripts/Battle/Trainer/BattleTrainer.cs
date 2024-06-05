@@ -28,6 +28,6 @@ namespace PracticeMonster
         {
             return Monsters[CurrentMonsterIndex];
         }
-
+        public abstract void HealAll();
     }
 }

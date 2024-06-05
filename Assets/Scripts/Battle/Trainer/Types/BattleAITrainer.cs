@@ -36,5 +36,10 @@ namespace PracticeMonster
             }
             return null;
         }
+
+        public override void HealAll()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

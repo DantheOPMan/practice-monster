@@ -27,5 +27,10 @@ namespace PracticeMonster
             // WildMonster typically only has one monster, so always return the same monster
             return null;
         }
+
+        public override void HealAll()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

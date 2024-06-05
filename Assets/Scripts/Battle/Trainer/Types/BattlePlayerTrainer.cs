@@ -42,5 +42,16 @@ namespace PracticeMonster
             }
             return null;
         }
+        public override void HealAll()
+        {
+            foreach (Monster monster in Monsters)
+            {
+                monster.InitializeStats();
+            }
+            foreach (Monster monster in PCMonsters)
+            {
+                monster.InitializeStats();
+            }
+        }
     }
 }

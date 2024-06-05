@@ -23,7 +23,7 @@ namespace PracticeMonster
         {
             Species = species;
             Level = level;
-            CurrentExperience = Species.ExperienceForNextLevel(level);
+            CurrentExperience = Species.ExperienceForNextLevel(level-1);
             IVs = GenerateRandomIVs();
             EVs = InitializeEVs();
             Moves = InitializeMoves();
