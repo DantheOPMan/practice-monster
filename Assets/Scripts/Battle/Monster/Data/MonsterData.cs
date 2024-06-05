@@ -8,6 +8,7 @@ namespace PracticeMonster
     {
         public MonsterSpecies Species { get; private set; }
         public int Level { get; private set; }
+        public int CurrentExperience { get; protected set; }
         public Dictionary<string, int> IVs { get; private set; }
         public Dictionary<string, int> EVs { get; private set; }
         public List<Move> Moves { get; private set; }
@@ -22,6 +23,7 @@ namespace PracticeMonster
         {
             Species = species;
             Level = level;
+            CurrentExperience = Species.ExperienceForNextLevel(level);
             IVs = GenerateRandomIVs();
             EVs = InitializeEVs();
             Moves = InitializeMoves();
@@ -89,6 +91,15 @@ namespace PracticeMonster
             {
                 return Mathf.FloorToInt(((2f * baseValue + iv + (ev / 4)) * Level / 100) + 5);
             }
+        }
+        public void GainExperience(int xp)
+        {
+            CurrentExperience += xp;
+        }
+        public void LevelUp()
+        {
+            Level++;
+            CalculateInitialStats();
         }
     }
 }

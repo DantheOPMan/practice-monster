@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Cinemachine.DocumentationSortingAttribute;
 
 namespace PracticeMonster
 {
@@ -142,23 +144,150 @@ namespace PracticeMonster
         public float GetDodgeProbability(int attackerSpeed)
         {
             float dodgeChance = (CurrentSpeed - attackerSpeed) / 2 + 50;
-            return Mathf.Clamp(dodgeChance / 100, 0, 1);  // Ensure probability is between 0 and 1
+            return (dodgeChance / 100);
         }
 
         public float GetAccuracyMultiplier()
         {
             if (AccuracyStage > 0)
-                return 1 + (AccuracyStage * 0.5f);
+                return ((3f + AccuracyStage) / 3f);
             else
-                return 1 - (Mathf.Abs(AccuracyStage) * (100 / 7) / 100f);
+                return (3f / (Mathf.Abs(AccuracyStage) + 3f));
         }
 
         public float GetEvasivenessMultiplier()
         {
             if (EvasivenessStage > 0)
-                return 1 + (EvasivenessStage * (100 / 7) / 100f);
+                return ((3f + EvasivenessStage) / 3f);
             else
-                return 1 - (Mathf.Abs(EvasivenessStage) * (100 / 7) / 100f);
+                return (3f / (Mathf.Abs(EvasivenessStage) + 3f));
+        }
+        public void ApplyStageChanges(Move move, bool isAttacker)
+        {
+            if (isAttacker)
+            {
+                LogStageChange("Attack", move.AttackerAttackStageChange);
+                AttackStage = Mathf.Clamp(AttackStage + move.AttackerAttackStageChange, -6, 6);
+
+                LogStageChange("Defense", move.AttackerDefenseStageChange);
+                DefenseStage = Mathf.Clamp(DefenseStage + move.AttackerDefenseStageChange, -6, 6);
+
+                LogStageChange("Special Attack", move.AttackerSpecialAttackStageChange);
+                SpecialAttackStage = Mathf.Clamp(SpecialAttackStage + move.AttackerSpecialAttackStageChange, -6, 6);
+
+                LogStageChange("Special Defense", move.AttackerSpecialDefenseStageChange);
+                SpecialDefenseStage = Mathf.Clamp(SpecialDefenseStage + move.AttackerSpecialDefenseStageChange, -6, 6);
+
+                LogStageChange("Speed", move.AttackerSpeedStageChange);
+                SpeedStage = Mathf.Clamp(SpeedStage + move.AttackerSpeedStageChange, -6, 6);
+
+                LogStageChange("Accuracy", move.AttackerAccuracyStageChange);
+                AccuracyStage = Mathf.Clamp(AccuracyStage + move.AttackerAccuracyStageChange, -6, 6);
+
+                LogStageChange("Evasiveness", move.AttackerEvasivenessStageChange);
+                EvasivenessStage = Mathf.Clamp(EvasivenessStage + move.AttackerEvasivenessStageChange, -6, 6);
+            }
+            else
+            {
+                LogStageChange("Attack", move.DefenderAttackStageChange);
+                AttackStage = Mathf.Clamp(AttackStage + move.DefenderAttackStageChange, -6, 6);
+
+                LogStageChange("Defense", move.DefenderDefenseStageChange);
+                DefenseStage = Mathf.Clamp(DefenseStage + move.DefenderDefenseStageChange, -6, 6);
+
+                LogStageChange("Special Attack", move.DefenderSpecialAttackStageChange);
+                SpecialAttackStage = Mathf.Clamp(SpecialAttackStage + move.DefenderSpecialAttackStageChange, -6, 6);
+
+                LogStageChange("Special Defense", move.DefenderSpecialDefenseStageChange);
+                SpecialDefenseStage = Mathf.Clamp(SpecialDefenseStage + move.DefenderSpecialDefenseStageChange, -6, 6);
+
+                LogStageChange("Speed", move.DefenderSpeedStageChange);
+                SpeedStage = Mathf.Clamp(SpeedStage + move.DefenderSpeedStageChange, -6, 6);
+
+                LogStageChange("Accuracy", move.DefenderAccuracyStageChange);
+                AccuracyStage = Mathf.Clamp(AccuracyStage + move.DefenderAccuracyStageChange, -6, 6);
+
+                LogStageChange("Evasiveness", move.DefenderEvasivenessStageChange);
+                EvasivenessStage = Mathf.Clamp(EvasivenessStage + move.DefenderEvasivenessStageChange, -6, 6);
+            }
+
+            UpdateCurrentStats();
+        }
+
+        private void LogStageChange(string statName, int change)
+        {
+            if (change == 1)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} increased!");
+            }
+            else if (change == 2)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} significantly increased!");
+            }
+            else if (change >= 3)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} dramatically increased!");
+            }
+            else if (change == -1)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} decreased!");
+            }
+            else if (change == -2)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} significantly decreased!");
+            }
+            else if (change <= -3)
+            {
+                BattleUIManager.Instance.Log($"{Nickname}'s {statName} dramatically decreased!");
+            }
+        }
+
+        private void UpdateCurrentStats()
+        {
+            CurrentAttack = UpdateCurrentStat(AttackStage, Data.Attack);
+            CurrentDefense = UpdateCurrentStat(DefenseStage, Data.Defense);
+            CurrentSpecialAttack = UpdateCurrentStat(SpecialAttackStage, Data.SpecialAttack);
+            CurrentSpecialDefense = UpdateCurrentStat(SpecialDefenseStage, Data.SpecialDefense);
+            CurrentSpeed = UpdateCurrentStat(SpeedStage, Data.Speed);
+        }
+        private int UpdateCurrentStat(int stage, int baseStat)
+        {
+            float stageFloat = (float)Mathf.Abs(stage);
+            float baseStatFloat = (float)baseStat;
+
+            if (stage > 0)
+                return Mathf.FloorToInt(((2f + stageFloat) / 2f) * baseStatFloat);
+            else
+                return Mathf.FloorToInt((2f / (2f + stageFloat))* baseStatFloat);
+        }
+        public void GainEVs(Monster loser)
+        {
+            foreach (var ev in loser.Data.Species.EVs)
+            {
+                Data.EVs[ev.Key] += ev.Value;
+                BattleUIManager.Instance.Log($"{Nickname} gained {ev.Value} {ev.Key} EV(s)!");
+            }
+        }
+        public void GainExperience(int xp)
+        {
+            Data.GainExperience(xp);
+            while (Data.CurrentExperience >= Data.Species.ExperienceForNextLevel(Data.Level))
+            {
+                LevelUp();
+            }
+        }
+
+        private void LevelUp()
+        {
+            Data.LevelUp();
+            BattleUIManager.Instance.Log($"{Nickname} leveled up to level {Data.Level}!");
+
+            // Learn new moves if any are available at the new level
+            LearnNewMoves();
+        }
+        private void LearnNewMoves()
+        {
+
         }
         #endregion
     }
