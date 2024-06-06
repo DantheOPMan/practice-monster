@@ -79,7 +79,7 @@ namespace PracticeMonster
             if (battleTrainer == null) return true;
 
 
-            foreach (var monster in battleTrainer.Monsters)
+            foreach (var monster in battleTrainer.PartyMonsters)
             {
                 if (monster.CurrentHP > 0)
                 {

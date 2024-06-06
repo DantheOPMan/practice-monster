@@ -6,11 +6,10 @@ namespace PracticeMonster
 {
     public class BattlePlayerTrainer : BattleTrainer
     {
-        public List<Monster> PCMonsters { get; private set; }
+        public List<Monster> PCMonsters => ((PlayerTrainerData)Data).PCMonsters;
 
         public BattlePlayerTrainer(PlayerTrainerData trainerData) : base(trainerData)
         {
-            PCMonsters = trainerData.PCMonsters;
         }
 
         public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
@@ -25,26 +24,34 @@ namespace PracticeMonster
         public override IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected)
         {
             BattleUIManager.Instance.ShowDefenseSelectionUI(onDefenseSelected);
-            yield return new WaitUntil(() => BattleUIManager.Instance.IsDefenseActionSelected());
+            yield return new WaitUntil(() => BattleUIManager.Instance.IsDefenseSelected());
             int selectedDefenseIndex = BattleUIManager.Instance.GetSelectedDefenseIndex();
             onDefenseSelected(selectedDefenseIndex);
+        }
+        public override IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected)
+        {
+            BattleUIManager.Instance.ShowSwitchSelectionUI(PartyMonsters, onSwitchSelected);
+            yield return new WaitUntil(() => BattleUIManager.Instance.IsSwitchSelected());
+            int selectedSwitchIndex = BattleUIManager.Instance.GetSelectedSwitchIndex();
+            onSwitchSelected(selectedSwitchIndex);
         }
 
         public override Monster GetNextMonster()
         {
-            foreach (Monster monster in Monsters)
+            foreach (Monster monster in PartyMonsters)
             {
                 if (monster.CurrentHP > 0)
                 {
-                    CurrentMonsterIndex = Monsters.IndexOf(monster);
+                    CurrentMonsterIndex = PartyMonsters.IndexOf(monster);
                     return monster;
                 }
             }
             return null;
         }
+
         public override void HealAll()
         {
-            foreach (Monster monster in Monsters)
+            foreach (Monster monster in PartyMonsters)
             {
                 monster.InitializeStats();
             }

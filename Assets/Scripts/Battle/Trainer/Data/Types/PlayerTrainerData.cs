@@ -23,7 +23,18 @@ namespace PracticeMonster
             InventoryMonsters = inventoryMonsters;
             PCMonsters = pcMonsters;
         }
+        public void AddMonster(Monster newMonster)
+        {
+            if (InventoryMonsters.Count < 6)
+            {
+                InventoryMonsters.Add(newMonster);
+                Debug.Log($"{newMonster.Nickname} was added to the inventory.");
+            }
+            else
+            {
+                PCMonsters.Add(newMonster);
+                Debug.Log($"{newMonster.Nickname} was added to the PC.");
+            }
+        }
     }
-
-
 }

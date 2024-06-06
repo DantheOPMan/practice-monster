@@ -15,6 +15,10 @@ namespace PracticeMonster
         private BattleTrainer defender;
         private int attackerMoveIndex;
         private int defenderActionIndex;
+        private int selectedActionIndex;
+
+        private bool actionSelected;
+        private bool defenseSelected;
 
         public void Initialize(BattleTrainer trainer1, BattleTrainer trainer2)
         {
@@ -34,9 +38,10 @@ namespace PracticeMonster
             InitializeTrainerMonsters(trainer2);
             StartCoroutine(BattleLoop());
         }
+
         private void InitializeTrainerMonsters(BattleTrainer trainer)
         {
-            foreach (var monster in trainer.Monsters)
+            foreach (var monster in trainer.PartyMonsters)
             {
                 monster.InitializeBattleState();
             }
@@ -55,15 +60,35 @@ namespace PracticeMonster
                 switch (state)
                 {
                     case BattleState.Start:
+                        actionSelected = false;
+                        defenseSelected = false;
+                        attackerMoveIndex = -1;
+                        defenderActionIndex = -1;
                         BattleUIManager.Instance.Log("Start turn");
                         yield return StartCoroutine(StartTurn());
                         break;
-                    case BattleState.SelectMove:
+                    case BattleState.SelectAction:
                         BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
+                        StartCoroutine(SelectAction());
+                        StartCoroutine(SelectDefense());
+                        yield return new WaitUntil(() => actionSelected);
+                        break;
+                    case BattleState.SelectMove:
                         yield return StartCoroutine(SelectMoves());
-                        BattleUIManager.Instance.LogReset();
+                        break;
+                    case BattleState.SelectSwitch:
+                        yield return new WaitUntil(() => defenseSelected);
+                        yield return StartCoroutine(SelectSwitch());
+                        break;
+                    case BattleState.SelectItem:
+                        yield return new WaitUntil(() => defenseSelected);
+                        yield return StartCoroutine(SelectItem());
+                        break;
+                    case BattleState.SelectCatch:
+                        yield return StartCoroutine(SelectCatch());
                         break;
                     case BattleState.ExecuteMove:
+                        yield return new WaitUntil(() => defenseSelected); 
                         yield return StartCoroutine(ExecuteMovePhase());
                         break;
                     case BattleState.CheckBattleEnd:
@@ -87,39 +112,113 @@ namespace PracticeMonster
                 IncrementActionTurns();
             }
 
-            state = BattleState.SelectMove;
+            DetermineAttackerAndDefender(out attacker, out defender);
+            state = BattleState.SelectAction;
             yield break;
+        }
+
+        private IEnumerator SelectAction()
+        {
+            if (attacker is BattlePlayerTrainer)
+            {
+                BattleUIManager.Instance.ShowActionSelectionUI((index) =>
+                {
+                    selectedActionIndex = index;
+                    actionSelected = true;
+                });
+
+                yield return new WaitUntil(() => actionSelected);
+
+                switch (selectedActionIndex)
+                {
+                    case 0:
+                        state = BattleState.SelectMove;
+                        break;
+                    case 1:
+                        state = BattleState.SelectSwitch;
+                        break;
+                    case 2:
+                        state = BattleState.SelectItem;
+                        break;
+                    case 3:
+                        state = BattleState.SelectCatch;
+                        break;
+                }
+            }
+            else
+            {
+                actionSelected = true;
+                state = BattleState.SelectMove;
+            }
+        }
+
+        private IEnumerator SelectDefense()
+        {
+
+            StartCoroutine(defender.Defend(this, (index) =>
+            {
+                defenderActionIndex = index;
+                defenseSelected = true;
+            }));
+            yield return new WaitUntil(() => defenseSelected);
         }
 
         private IEnumerator SelectMoves()
         {
-            DetermineAttackerAndDefender(out attacker, out defender);
             Monster attackMonster = attacker.GetCurrentMonster();
             Monster defenseMonster = defender.GetCurrentMonster();
 
             bool attackerMoveSelected = false;
-            bool defenderActionSelected = false;
             attackerMoveIndex = -1;
-            defenderActionIndex = -1;
 
             StartCoroutine(attacker.SelectMove(this, (index) =>
             {
                 attackerMoveIndex = index;
                 attackerMoveSelected = true;
             }));
-            StartCoroutine(defender.Defend(this, (index) =>
+
             {
-                defenderActionIndex = index;
-                defenderActionSelected = true;
+                attacker.ActionTurn += attacker.GetCurrentMonster().GetActionTurnReset();
+                attacker.CurrentMonsterIndex = index;
+                switchSelected = true;
             }));
+             
+            yield return new WaitUntil(() => switchSelected);
+            state = BattleState.EndTurn;
+        }
 
-            yield return new WaitUntil(() => attackerMoveSelected && defenderActionSelected);
+        private IEnumerator SelectItem()
+        {
+            Monster attackMonster = attacker.GetCurrentMonster();
+            attackMonster.CurrentHP = Mathf.Min(attackMonster.CurrentHP + 5, attackMonster.Data.MaxHP);
+            BattleUIManager.Instance.Log($"{attackMonster.Nickname} healed 5 HP!");
+            state = BattleState.EndTurn;
+            yield break;
+        }
 
-            state = BattleState.ExecuteMove;
+        private IEnumerator SelectCatch()
+        {
+            if (defender is WildMonster)
+            {
+                Monster defenseMonster = defender.GetCurrentMonster();
+                attacker.Data.InventoryMonsters.Add(defenseMonster);
+                BattleUIManager.Instance.Log($"{defenseMonster.Nickname} was caught!");
+                state = BattleState.EndBattle;
+                yield return new WaitForSeconds(7);
+                battleManager.EndBattle();
+            }
+            else
+            {
+                attacker.ActionTurn += attacker.GetCurrentMonster().GetActionTurnReset();
+                BattleUIManager.Instance.Log("Cannot catch another trainer's monster!");
+                state = BattleState.EndTurn;
+            }
+            yield break;
         }
 
         private IEnumerator ExecuteMovePhase()
         {
+            BattleUIManager.Instance.LogReset();
             PrintStatus();
 
             Monster attackMonster = attacker.GetCurrentMonster();
@@ -127,7 +226,7 @@ namespace PracticeMonster
 
             BattleUIManager.Instance.Log($"Turn {turnCount}: {attackMonster.Nickname}'s turn to attack");
 
-            ExecuteMove(attacker, defender, attackerMoveIndex, defenderActionIndex);
+            ExecuteMove(attacker, defender);
 
             state = BattleState.CheckBattleEnd;
             yield break;
@@ -143,7 +242,7 @@ namespace PracticeMonster
             {
                 AwardExperience(attackMonster, defenseMonster, true); // Assuming both monsters in battle
                 attackMonster.GainEVs(defenseMonster);
-                       
+
                 if (!SwitchToNextMonster(defenseMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
                     BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
@@ -157,11 +256,12 @@ namespace PracticeMonster
             if (attackMonster.CurrentHP <= 0)
             {
                 AwardExperience(defenseMonster, attackMonster, true); // Assuming both monsters in battle
-                attackMonster.GainEVs(attackMonster);
-           
+                attackMonster.GainEVs(defenseMonster);
+
                 if (!SwitchToNextMonster(attackMonster == trainer1.GetCurrentMonster() ? trainer1 : trainer2))
                 {
                     BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
+
                     BattleUIManager.Instance.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
                     yield return new WaitForSeconds(7);
                     battleManager.EndBattle();
@@ -173,7 +273,7 @@ namespace PracticeMonster
             yield break;
         }
 
-        private void ExecuteMove(BattleTrainer attacker, BattleTrainer defender, int attackerMoveIndex, int defenderActionIndex)
+        private void ExecuteMove(BattleTrainer attacker, BattleTrainer defender)
         {
             Monster attackMonster = attacker.GetCurrentMonster();
             Monster defenseMonster = defender.GetCurrentMonster();
@@ -181,6 +281,7 @@ namespace PracticeMonster
 
             BattleUIManager.Instance.Log($"{attackMonster.Nickname} uses {selectedMove.Name}!");
 
+            string defensiveAction = GetDefensiveAction(defenseMonster, defenderActionIndex);
 
             if (attackMonster.Stamina < selectedMove.StaminaCost)
             {
@@ -190,7 +291,6 @@ namespace PracticeMonster
             }
 
             // Defender's defensive action
-            string defensiveAction = GetDefensiveAction(defenseMonster, defenderActionIndex);
 
             attackMonster.Stamina -= selectedMove.StaminaCost;
             attacker.ActionTurn += selectedMove.TurnAdjustment + attackMonster.GetActionTurnReset();
@@ -206,9 +306,8 @@ namespace PracticeMonster
             int damage = CalculateDamage(attackMonster, defenseMonster, selectedMove, defensiveAction);
             attackMonster.ApplyStageChanges(selectedMove, true);
             defenseMonster.ApplyStageChanges(selectedMove, false);
-            defenseMonster.CurrentHP -= damage;
+            defenseMonster.CurrentHP = Mathf.Max(defenseMonster.CurrentHP - damage, 0);
             BattleUIManager.Instance.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
-
         }
 
         private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)
@@ -255,7 +354,7 @@ namespace PracticeMonster
             }
             modifier *= typeEffectiveness;
 
-            float damage = ((((attacker.Data.Level*2f + 20f) / 300f)) * (move.Power * modifier) * ((float)attackStat / (defensiveMultiplier * (float)defenseStat)));
+            float damage = ((((attacker.Data.Level * 2f + 20f) / 300f)) * (move.Power * modifier) * ((float)attackStat / (defensiveMultiplier * (float)defenseStat)));
             return Mathf.FloorToInt(damage);
         }
 
@@ -272,7 +371,8 @@ namespace PracticeMonster
                 BattleUIManager.Instance.Log($"{defender.Nickname} braces for impact!");
                 defender.Stamina -= 25;
                 return "Brace";
-            } else if(index !=2)
+            }
+            else if (index != 2)
             {
                 if (index == 0)
                 {
@@ -295,6 +395,7 @@ namespace PracticeMonster
                 BattleUIManager.Instance.Log($"{trainer.Name} has no more monsters left!");
                 return false;
             }
+
             BattleUIManager.Instance.Log("Switching to next Monster: " + nextMonster.Nickname);
             return true;
         }
@@ -305,7 +406,7 @@ namespace PracticeMonster
             trainer2.ActionTurn++;
             trainer1.GetCurrentMonster().Stamina += 2;
             trainer2.GetCurrentMonster().Stamina += 2;
-            if(trainer1.GetCurrentMonster().Stamina > 100)
+            if (trainer1.GetCurrentMonster().Stamina > 100)
             {
                 trainer1.GetCurrentMonster().Stamina = 100;
             }
@@ -354,6 +455,7 @@ namespace PracticeMonster
                 defender = trainer1;
             }
         }
+
         private void AwardExperience(Monster winner, Monster loser, bool inBattle)
         {
             int baseExperience = loser.Data.Species.BaseExperience;
@@ -366,6 +468,5 @@ namespace PracticeMonster
             winner.GainExperience((int)xpGained);
             BattleUIManager.Instance.Log($"{winner.Nickname} gained {xpGained} XP!");
         }
-
     }
 }

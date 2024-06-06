@@ -165,55 +165,37 @@ namespace PracticeMonster
         }
         public void ApplyStageChanges(Move move, bool isAttacker)
         {
-            if (isAttacker)
+            Dictionary<string, int> stageChanges = isAttacker ? move.AttackerStageChanges : move.DefenderStageChanges;
+
+            foreach (var stageChange in stageChanges)
             {
-                LogStageChange("Attack", move.AttackerAttackStageChange);
-                AttackStage = Mathf.Clamp(AttackStage + move.AttackerAttackStageChange, -6, 6);
-
-                LogStageChange("Defense", move.AttackerDefenseStageChange);
-                DefenseStage = Mathf.Clamp(DefenseStage + move.AttackerDefenseStageChange, -6, 6);
-
-                LogStageChange("Special Attack", move.AttackerSpecialAttackStageChange);
-                SpecialAttackStage = Mathf.Clamp(SpecialAttackStage + move.AttackerSpecialAttackStageChange, -6, 6);
-
-                LogStageChange("Special Defense", move.AttackerSpecialDefenseStageChange);
-                SpecialDefenseStage = Mathf.Clamp(SpecialDefenseStage + move.AttackerSpecialDefenseStageChange, -6, 6);
-
-                LogStageChange("Speed", move.AttackerSpeedStageChange);
-                SpeedStage = Mathf.Clamp(SpeedStage + move.AttackerSpeedStageChange, -6, 6);
-
-                LogStageChange("Accuracy", move.AttackerAccuracyStageChange);
-                AccuracyStage = Mathf.Clamp(AccuracyStage + move.AttackerAccuracyStageChange, -6, 6);
-
-                LogStageChange("Evasiveness", move.AttackerEvasivenessStageChange);
-                EvasivenessStage = Mathf.Clamp(EvasivenessStage + move.AttackerEvasivenessStageChange, -6, 6);
+                switch (stageChange.Key)
+                {
+                    case "Attack":
+                        CurrentAttack += stageChange.Value;
+                        break;
+                    case "Defense":
+                        CurrentDefense += stageChange.Value;
+                        break;
+                    case "SpecialAttack":
+                        CurrentSpecialAttack += stageChange.Value;
+                        break;
+                    case "SpecialDefense":
+                        CurrentSpecialDefense += stageChange.Value;
+                        break;
+                    case "Speed":
+                        CurrentSpeed += stageChange.Value;
+                        break;
+                    case "Accuracy":
+                        AccuracyStage += stageChange.Value;
+                        break;
+                    case "Evasiveness":
+                        EvasivenessStage += stageChange.Value;
+                        break;
+                }
             }
-            else
-            {
-                LogStageChange("Attack", move.DefenderAttackStageChange);
-                AttackStage = Mathf.Clamp(AttackStage + move.DefenderAttackStageChange, -6, 6);
-
-                LogStageChange("Defense", move.DefenderDefenseStageChange);
-                DefenseStage = Mathf.Clamp(DefenseStage + move.DefenderDefenseStageChange, -6, 6);
-
-                LogStageChange("Special Attack", move.DefenderSpecialAttackStageChange);
-                SpecialAttackStage = Mathf.Clamp(SpecialAttackStage + move.DefenderSpecialAttackStageChange, -6, 6);
-
-                LogStageChange("Special Defense", move.DefenderSpecialDefenseStageChange);
-                SpecialDefenseStage = Mathf.Clamp(SpecialDefenseStage + move.DefenderSpecialDefenseStageChange, -6, 6);
-
-                LogStageChange("Speed", move.DefenderSpeedStageChange);
-                SpeedStage = Mathf.Clamp(SpeedStage + move.DefenderSpeedStageChange, -6, 6);
-
-                LogStageChange("Accuracy", move.DefenderAccuracyStageChange);
-                AccuracyStage = Mathf.Clamp(AccuracyStage + move.DefenderAccuracyStageChange, -6, 6);
-
-                LogStageChange("Evasiveness", move.DefenderEvasivenessStageChange);
-                EvasivenessStage = Mathf.Clamp(EvasivenessStage + move.DefenderEvasivenessStageChange, -6, 6);
-            }
-
-            UpdateCurrentStats();
         }
+
 
         private void LogStageChange(string statName, int change)
         {

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 namespace PracticeMonster
 {
@@ -17,16 +18,27 @@ namespace PracticeMonster
         public Button braceButton;
         public Button standbyButton;
 
+        public Button attackButton;
+        public Button switchButton;
+        public Button healButton;
+        public Button catchButton;
+
         public GameObject moveSelectionPanel;
         public GameObject defenseSelectionPanel;
+        public GameObject actionSelectionPanel;
+        public GameObject switchSelectionPanel;
 
         public GameObject battleUIPrefab; // Reference to the BattleUI prefab
         private GameObject battleUIInstance;
 
         private bool moveSelected = false;
-        private bool defenseActionSelected = false;
+        private bool defenseSelected = false;
+        private bool actionSelected = false;
+        private bool switchSelected = false;
         private int selectedMoveIndex;
         private int selectedDefenseIndex;
+        private int selectedActionIndex;
+        private int selectedSwitchIndex;
 
         // References to HP, Stamina, and XP sliders and name text
         public Slider trainer1HpSlider;
@@ -74,6 +86,8 @@ namespace PracticeMonster
             // Assign the instantiated UI elements to the script variables
             moveSelectionPanel = battleUIInstance.transform.Find("MoveSelectionPanel").gameObject;
             defenseSelectionPanel = battleUIInstance.transform.Find("DefenseSelectionPanel").gameObject;
+            actionSelectionPanel = battleUIInstance.transform.Find("ActionSelectionPanel").gameObject;
+            switchSelectionPanel = battleUIInstance.transform.Find("SwitchSelectionPanel").gameObject;
 
             moveButton1 = moveSelectionPanel.transform.Find("MoveButton1").GetComponent<Button>();
             moveButton2 = moveSelectionPanel.transform.Find("MoveButton2").GetComponent<Button>();
@@ -84,31 +98,58 @@ namespace PracticeMonster
             braceButton = defenseSelectionPanel.transform.Find("BraceButton").GetComponent<Button>();
             standbyButton = defenseSelectionPanel.transform.Find("StandbyButton").GetComponent<Button>();
 
-            // Find and assign HP, Stamina, and XP sliders and texts
-            trainer1HpSlider = battleUIInstance.transform.Find("Trainer1HpSlider").GetComponent<Slider>();
-            trainer1HpText = battleUIInstance.transform.Find("Trainer1HpText").GetComponent<TextMeshProUGUI>();
-            trainer1StaminaSlider = battleUIInstance.transform.Find("Trainer1StaminaSlider").GetComponent<Slider>();
-            trainer1StaminaText = battleUIInstance.transform.Find("Trainer1StaminaText").GetComponent<TextMeshProUGUI>();
-            trainer1XpSlider = battleUIInstance.transform.Find("Trainer1XpSlider").GetComponent<Slider>(); // XP slider
-            trainer1XpText = battleUIInstance.transform.Find("Trainer1XpText").GetComponent<TextMeshProUGUI>(); // XP text
-            trainer1LevelText = battleUIInstance.transform.Find("Trainer1LevelText").GetComponent<TextMeshProUGUI>();
-            trainer1NameText = battleUIInstance.transform.Find("Trainer1NameText").GetComponent<TextMeshProUGUI>();
+            attackButton = actionSelectionPanel.transform.Find("AttackButton").GetComponent<Button>();
+            switchButton = actionSelectionPanel.transform.Find("SwitchButton").GetComponent<Button>();
+            healButton = actionSelectionPanel.transform.Find("HealButton").GetComponent<Button>();
+            catchButton = actionSelectionPanel.transform.Find("CatchButton").GetComponent<Button>();
 
-            trainer2HpSlider = battleUIInstance.transform.Find("Trainer2HpSlider").GetComponent<Slider>();
-            trainer2HpText = battleUIInstance.transform.Find("Trainer2HpText").GetComponent<TextMeshProUGUI>();
-            trainer2StaminaSlider = battleUIInstance.transform.Find("Trainer2StaminaSlider").GetComponent<Slider>();
-            trainer2StaminaText = battleUIInstance.transform.Find("Trainer2StaminaText").GetComponent<TextMeshProUGUI>();
-            trainer2XpSlider = battleUIInstance.transform.Find("Trainer2XpSlider").GetComponent<Slider>(); // XP slider
-            trainer2XpText = battleUIInstance.transform.Find("Trainer2XpText").GetComponent<TextMeshProUGUI>(); // XP text
-            trainer2LevelText = battleUIInstance.transform.Find("Trainer2LevelText").GetComponent<TextMeshProUGUI>();
-            trainer2NameText = battleUIInstance.transform.Find("Trainer2NameText").GetComponent<TextMeshProUGUI>();
+            // Find and assign HP, Stamina, and XP sliders and texts
+            Transform dataTransform1 = battleUIInstance.transform.Find("Data");
+            trainer1HpSlider = dataTransform1.Find("Trainer1HpSlider").GetComponent<Slider>();
+            trainer1HpText = dataTransform1.Find("Trainer1HpText").GetComponent<TextMeshProUGUI>();
+            trainer1StaminaSlider = dataTransform1.Find("Trainer1StaminaSlider").GetComponent<Slider>();
+            trainer1StaminaText = dataTransform1.Find("Trainer1StaminaText").GetComponent<TextMeshProUGUI>();
+            trainer1XpSlider = dataTransform1.Find("Trainer1XpSlider").GetComponent<Slider>(); // XP slider
+            trainer1XpText = dataTransform1.Find("Trainer1XpText").GetComponent<TextMeshProUGUI>(); // XP text
+            trainer1LevelText = dataTransform1.Find("Trainer1LevelText").GetComponent<TextMeshProUGUI>();
+            trainer1NameText = dataTransform1.Find("Trainer1NameText").GetComponent<TextMeshProUGUI>();
+
+            Transform dataTransform2 = battleUIInstance.transform.Find("Data");
+            trainer2HpSlider = dataTransform2.Find("Trainer2HpSlider").GetComponent<Slider>();
+            trainer2HpText = dataTransform2.Find("Trainer2HpText").GetComponent<TextMeshProUGUI>();
+            trainer2StaminaSlider = dataTransform2.Find("Trainer2StaminaSlider").GetComponent<Slider>();
+            trainer2StaminaText = dataTransform2.Find("Trainer2StaminaText").GetComponent<TextMeshProUGUI>();
+            trainer2XpSlider = dataTransform2.Find("Trainer2XpSlider").GetComponent<Slider>(); // XP slider
+            trainer2XpText = dataTransform2.Find("Trainer2XpText").GetComponent<TextMeshProUGUI>(); // XP text
+            trainer2LevelText = dataTransform2.Find("Trainer2LevelText").GetComponent<TextMeshProUGUI>();
+            trainer2NameText = dataTransform2.Find("Trainer2NameText").GetComponent<TextMeshProUGUI>();
+
 
             moveSelectionPanel.SetActive(false);
             defenseSelectionPanel.SetActive(false);
+            actionSelectionPanel.SetActive(false);
+            switchSelectionPanel.SetActive(false);
 
             logText = battleUIInstance.transform.Find("LogText").GetComponent<TextMeshProUGUI>();
 
             UpdateBattleUI(trainer1, trainer2);
+        }
+
+        public void ShowActionSelectionUI(System.Action<int> callback)
+        {
+            actionSelectionPanel.SetActive(true);
+
+            // Remove all previous listeners to prevent multiple invocations
+            attackButton.onClick.RemoveAllListeners();
+            switchButton.onClick.RemoveAllListeners();
+            healButton.onClick.RemoveAllListeners();
+            catchButton.onClick.RemoveAllListeners();
+
+            // Add new listeners
+            attackButton.onClick.AddListener(() => { callback(0); actionSelected = true; actionSelectionPanel.SetActive(false); });
+            switchButton.onClick.AddListener(() => { callback(1); actionSelected = true; actionSelectionPanel.SetActive(false); });
+            healButton.onClick.AddListener(() => { callback(2); actionSelected = true; actionSelectionPanel.SetActive(false); });
+            catchButton.onClick.AddListener(() => { callback(3); actionSelected = true; actionSelectionPanel.SetActive(false); });
         }
 
         private void SetMoveButton(Button button, Monster monster, int moveIndex, System.Action<int> callback)
@@ -117,14 +158,13 @@ namespace PracticeMonster
             {
                 button.GetComponentInChildren<TextMeshProUGUI>().text = monster.Data.Moves[moveIndex].Name;
                 button.gameObject.SetActive(true);
-                button.onClick.AddListener(() => { callback(moveIndex); moveSelected = true; selectedMoveIndex = moveIndex; moveSelectionPanel.SetActive(false); });
+                button.onClick.AddListener(() => { callback(moveIndex); OnMoveButtonClicked(moveIndex); moveSelectionPanel.SetActive(false); });
             }
             else
             {
                 button.gameObject.SetActive(false);
             }
         }
-
         public void ShowMoveSelectionUI(Monster currentMonster, System.Action<int> callback)
         {
             moveSelectionPanel.SetActive(true);
@@ -146,10 +186,53 @@ namespace PracticeMonster
             standbyButton.onClick.RemoveAllListeners();
 
             // Add new listeners
-            dodgeButton.onClick.AddListener(() => { callback(0); selectedDefenseIndex = 0; defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
-            braceButton.onClick.AddListener(() => { callback(1); selectedDefenseIndex = 1; defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
-            standbyButton.onClick.AddListener(() => { callback(2); selectedDefenseIndex = 2; defenseActionSelected = true; defenseSelectionPanel.SetActive(false); });
+            dodgeButton.onClick.AddListener(() => { /*callback(0)*/; OnDefenseButtonClicked(0); defenseSelectionPanel.SetActive(false); });
+            braceButton.onClick.AddListener(() => { /*callback(1)*/; OnDefenseButtonClicked(1); defenseSelectionPanel.SetActive(false); });
+            standbyButton.onClick.AddListener(() => { /*callback(2)*/; OnDefenseButtonClicked(2); defenseSelectionPanel.SetActive(false); });
         }
+
+        public void ShowSwitchSelectionUI(List<Monster> monsters, System.Action<int> callback)
+        {
+            switchSelectionPanel.SetActive(true);
+
+            // Assuming you have 6 buttons on the canvas with names SwitchButton0 to SwitchButton5
+            for (int i = 0; i < 6; i++)
+            {
+                Button switchButton = switchSelectionPanel.transform.Find("SwitchButton" + (i+1)).GetComponent<Button>();
+                TextMeshProUGUI buttonText = switchButton.GetComponentInChildren<TextMeshProUGUI>();
+
+                if (i < monsters.Count)
+                {
+                    buttonText.text = monsters[i].Nickname;
+
+                    if (monsters[i].CurrentHP > 0)
+                    {
+                        switchButton.interactable = true;
+                        switchButton.onClick.RemoveAllListeners(); // Clear previous listeners
+                        int index = i; // Capture the current index
+                        switchButton.onClick.AddListener(() => { /*callback(index)*/; selectedSwitchIndex = index; switchSelected = true; switchSelectionPanel.SetActive(false); });
+                    }
+                    else
+                    {
+                        switchButton.interactable = false;
+                    }
+
+                    switchButton.gameObject.SetActive(true);
+                }
+                else
+                {
+                    switchButton.gameObject.SetActive(false);
+                }
+
+                // Ensure the current monster button is visible and disabled
+                if (i == selectedMoveIndex)
+                {
+                    switchButton.interactable = false;
+                    switchButton.gameObject.SetActive(true);
+                }
+            }
+        }
+
 
         public void UpdateHpSlider(Slider hpSlider, TextMeshProUGUI hpText, int currentHP, int maxHP)
         {
@@ -181,13 +264,13 @@ namespace PracticeMonster
         {
             UpdateHpSlider(trainer1HpSlider, trainer1HpText, trainer1.GetCurrentMonster().CurrentHP, trainer1.GetCurrentMonster().Data.MaxHP);
             UpdateStaminaSlider(trainer1StaminaSlider, trainer1StaminaText, trainer1.GetCurrentMonster().Stamina);
-            UpdateXpSlider(trainer1XpSlider, trainer1XpText,  trainer1.GetCurrentMonster().Data.CurrentExperience - trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level-1), trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level) - (trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level-1)));
+            UpdateXpSlider(trainer1XpSlider, trainer1XpText, trainer1.GetCurrentMonster().Data.CurrentExperience - trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level - 1), trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level) - (trainer1.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer1.GetCurrentMonster().Data.Level - 1)));
             trainer1LevelText.text = "Lvl " + trainer1.GetCurrentMonster().Data.Level.ToString();
             trainer1NameText.text = trainer1.GetCurrentMonster().Nickname;
 
             UpdateHpSlider(trainer2HpSlider, trainer2HpText, trainer2.GetCurrentMonster().CurrentHP, trainer2.GetCurrentMonster().Data.MaxHP);
             UpdateStaminaSlider(trainer2StaminaSlider, trainer2StaminaText, trainer2.GetCurrentMonster().Stamina);
-            UpdateXpSlider(trainer2XpSlider, trainer2XpText, trainer2.GetCurrentMonster().Data.CurrentExperience - trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level-1), trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level) - (trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level - 1)));
+            UpdateXpSlider(trainer2XpSlider, trainer2XpText, trainer2.GetCurrentMonster().Data.CurrentExperience - trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level - 1), trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level) - (trainer2.GetCurrentMonster().Data.Species.ExperienceForNextLevel(trainer2.GetCurrentMonster().Data.Level - 1)));
             trainer2LevelText.text = "Lvl " + trainer2.GetCurrentMonster().Data.Level.ToString();
             trainer2NameText.text = trainer2.GetCurrentMonster().Nickname;
         }
@@ -219,7 +302,7 @@ namespace PracticeMonster
         private void OnDefenseButtonClicked(int index)
         {
             selectedDefenseIndex = index;
-            defenseActionSelected = true;
+            defenseSelected = true;
         }
 
         public bool IsMoveSelected()
@@ -233,15 +316,30 @@ namespace PracticeMonster
             return selectedMoveIndex;
         }
 
-        public bool IsDefenseActionSelected()
+        public bool IsDefenseSelected()
         {
-            return defenseActionSelected;
+            return defenseSelected;
         }
 
         public int GetSelectedDefenseIndex()
         {
-            defenseActionSelected = false;
+            defenseSelected = false;
             return selectedDefenseIndex;
+        }
+        public bool IsSwitchSelected()
+        {
+            return switchSelected;
+        }
+
+        public int GetSelectedSwitchIndex()
+        {
+            switchSelected = false;
+            return selectedSwitchIndex;
+        }
+
+        public bool IsActionSelected()
+        {
+            return actionSelected;
         }
     }
 }

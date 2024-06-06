@@ -13,7 +13,7 @@ namespace PracticeMonster
         public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
         {
             yield return new WaitForSeconds(1); // Simulate thinking time
-            int randomMoveIndex = Random.Range(0, Monsters[CurrentMonsterIndex].Data.Moves.Count);
+            int randomMoveIndex = Random.Range(0, PartyMonsters[CurrentMonsterIndex].Data.Moves.Count);
             onMoveSelected(randomMoveIndex);
         }
 
@@ -23,14 +23,18 @@ namespace PracticeMonster
             int randomDefenseIndex = Random.Range(0, 3); // 0 for Dodge, 1 for Brace, 2 for Standby
             onDefenseSelected(randomDefenseIndex);
         }
+        public override IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public override Monster GetNextMonster()
         {
-            foreach (Monster monster in Monsters)
+            foreach (Monster monster in PartyMonsters)
             {
                 if (monster.CurrentHP > 0)
                 {
-                    CurrentMonsterIndex = Monsters.IndexOf(monster);
+                    CurrentMonsterIndex = PartyMonsters.IndexOf(monster);
                     return monster;
                 }
             }
@@ -39,7 +43,12 @@ namespace PracticeMonster
 
         public override void HealAll()
         {
-            throw new System.NotImplementedException();
+            foreach (Monster monster in PartyMonsters)
+            {
+                monster.InitializeStats();
+            }
         }
+
+        
     }
 }
