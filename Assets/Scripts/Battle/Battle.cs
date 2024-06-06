@@ -176,7 +176,15 @@ namespace PracticeMonster
                 attackerMoveIndex = index;
                 attackerMoveSelected = true;
             }));
+            
+            yield return new WaitUntil(() => attackerMoveSelected);
+            state = BattleState.ExecuteMove;
+        }
 
+        private IEnumerator SelectSwitch()
+        {
+            bool switchSelected = false;
+            StartCoroutine(attacker.SwitchMonster(this, (index) =>
             {
                 attacker.ActionTurn += attacker.GetCurrentMonster().GetActionTurnReset();
                 attacker.CurrentMonsterIndex = index;
