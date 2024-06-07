@@ -8,7 +8,7 @@ namespace PracticeMonster
     public class Monster
     {
         public MonsterData Data { get; private set; }
-        public string Ability { get; private set; }
+        public Ability Ability { get; private set; }
         public string HeldItem { get; private set; }
         public string Nickname { get; private set; }
 
@@ -78,6 +78,15 @@ namespace PracticeMonster
         #endregion
 
         #region Reusable Methods
+        public float ActivateAbility(Battle battle, AbilityTrigger trigger, Move move, Monster target = null)
+        {
+            if (Ability != null && Ability.Triggers.Contains(trigger))
+            {
+                return Ability.Activate(battle, this, move, target);
+            }
+            return 1.0f;
+        }
+
         public void ChangeMove(int moveIndex, string newMoveName)
         {
             Move newMove = Data.Species.Moves.Find(move => move.Name == newMoveName);
@@ -228,7 +237,7 @@ namespace PracticeMonster
             }
         }
 
-        private void UpdateCurrentStats()
+        public void UpdateCurrentStats()
         {
             CurrentAttack = UpdateCurrentStat(AttackStage, Data.Attack);
             CurrentDefense = UpdateCurrentStat(DefenseStage, Data.Defense);

@@ -71,6 +71,8 @@ namespace PracticeMonster
             }
 
             int damage = CalculateDamage(attackerMonster, defenderMonster, defensiveAction);
+            float abilityMultiplier = attackerMonster.ActivateAbility(null, AbilityTrigger.OnMoveUsed, this, defenderMonster);
+
             attackerMonster.ApplyStageChanges(this, true);
             defenderMonster.ApplyStageChanges(this, false);
             defenderMonster.CurrentHP = Mathf.Max(defenderMonster.CurrentHP - damage, 0);

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace PracticeMonster
@@ -56,6 +57,9 @@ namespace PracticeMonster
 
         private IEnumerator BattleLoop()
         {
+            trainer1.GetCurrentMonster().ActivateAbility(this, AbilityTrigger.OnSwitchIn, null, trainer2.GetCurrentMonster());
+            trainer2.GetCurrentMonster().ActivateAbility(this, AbilityTrigger.OnSwitchIn, null, trainer1.GetCurrentMonster());
+
             while (state != BattleState.EndBattle)
             {
                 switch (state)
@@ -198,6 +202,10 @@ namespace PracticeMonster
             }));
              
             yield return new WaitUntil(() => switchSelected);
+
+            attacker.GetCurrentMonster().ActivateAbility(this, AbilityTrigger.OnSwitchIn, null, defender.GetCurrentMonster());
+            defender.GetCurrentMonster().ActivateAbility(this, AbilityTrigger.OnSwitchIn, null, attacker.GetCurrentMonster());
+
             state = BattleState.EndTurn;
         }
 

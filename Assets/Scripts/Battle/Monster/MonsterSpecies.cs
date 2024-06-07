@@ -20,13 +20,13 @@ namespace PracticeMonster
         public Dictionary<string, int> BaseStats { get; private set; }
         public List<Move> Moves { get; private set; }
         public List<string> Types { get; private set; }
-        public List<string> Abilities { get; private set; }
+        public List<Ability> Abilities { get; private set; }
         public List<string> HeldItems { get; private set; }
         public Dictionary<string, int> EVs { get; private set; }
         public int BaseExperience { get; private set; }
         public ExperienceGroup ExperienceType { get; private set; }
 
-        public MonsterSpecies(string name, Dictionary<string, int> baseStats, List<Move> moves, List<string> types, List<string> abilities, List<string> heldItems, Dictionary<string, int> evs, int baseExperience, ExperienceGroup experienceType)
+        public MonsterSpecies(string name, Dictionary<string, int> baseStats, List<Move> moves, List<string> types, List<Ability> abilities, List<string> heldItems, Dictionary<string, int> evs, int baseExperience, ExperienceGroup experienceType)
         {
             Name = name;
             BaseStats = baseStats;
