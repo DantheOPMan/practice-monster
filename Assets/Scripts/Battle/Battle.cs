@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PracticeMonster
@@ -60,11 +61,7 @@ namespace PracticeMonster
                 switch (state)
                 {
                     case BattleState.Start:
-                        actionSelected = false;
-                        defenseSelected = false;
-                        attackerMoveIndex = -1;
-                        defenderActionIndex = -1;
-                        BattleUIManager.Instance.Log("Start turn");
+                        PrepareForTurn();
                         yield return StartCoroutine(StartTurn());
                         break;
                     case BattleState.SelectAction:
@@ -96,13 +93,19 @@ namespace PracticeMonster
                         break;
                     case BattleState.EndTurn:
                         state = BattleState.Start;
-                        BattleUIManager.Instance.Log("End turn");
-                        BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
+                        yield return StartCoroutine(EndTurn());
                         break;
                 }
             }
         }
-
+        private void PrepareForTurn()
+        {
+            actionSelected = false;
+            defenseSelected = false;
+            attackerMoveIndex = -1;
+            defenderActionIndex = -1;
+            BattleUIManager.Instance.Log("Start turn");
+        }
         private IEnumerator StartTurn()
         {
             turnCount++;
@@ -114,6 +117,9 @@ namespace PracticeMonster
 
             DetermineAttackerAndDefender(out attacker, out defender);
             state = BattleState.SelectAction;
+
+            List<string> turnQueue = CalculateTurnQueue();
+            BattleUIManager.Instance.UpdateTurnQueue(turnQueue);
             yield break;
         }
 
@@ -212,7 +218,7 @@ namespace PracticeMonster
                 attacker.Data.InventoryMonsters.Add(defenseMonster);
                 BattleUIManager.Instance.Log($"{defenseMonster.Nickname} was caught!");
                 state = BattleState.EndBattle;
-                yield return new WaitForSeconds(7);
+                yield return new WaitForSeconds(5);
                 battleManager.EndBattle();
             }
             else
@@ -255,9 +261,9 @@ namespace PracticeMonster
                 {
                     BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
                     BattleUIManager.Instance.Log($"{(defenseMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
-                    yield return new WaitForSeconds(7);
-                    battleManager.EndBattle();
                     state = BattleState.EndBattle;
+                    yield return new WaitForSeconds(5);
+                    battleManager.EndBattle();
                     yield break;
                 }
             }
@@ -271,15 +277,24 @@ namespace PracticeMonster
                     BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
 
                     BattleUIManager.Instance.Log($"{(attackMonster == trainer1.GetCurrentMonster() ? trainer2.Name : trainer1.Name)} wins the battle!");
-                    yield return new WaitForSeconds(7);
-                    battleManager.EndBattle();
                     state = BattleState.EndBattle;
+                    yield return new WaitForSeconds(5);
+                    battleManager.EndBattle();
                     yield break;
                 }
             }
             state = BattleState.EndTurn;
             yield break;
         }
+
+        private IEnumerator EndTurn()
+        {
+            state = BattleState.Start;
+            BattleUIManager.Instance.Log("End turn");
+            BattleUIManager.Instance.UpdateBattleUI(trainer1, trainer2);
+            yield break;
+        }
+
 
         private void ExecuteMove(BattleTrainer attacker, BattleTrainer defender)
         {
@@ -290,6 +305,12 @@ namespace PracticeMonster
             BattleUIManager.Instance.Log($"{attackMonster.Nickname} uses {selectedMove.Name}!");
 
             string defensiveAction = GetDefensiveAction(defenseMonster, defenderActionIndex);
+            
+            if (attackMonster.CheckStatusEffectForAction())
+            {
+                attacker.ActionTurn += attackMonster.GetActionTurnReset();
+                return;
+            }
 
             if (attackMonster.Stamina < selectedMove.StaminaCost)
             {
@@ -316,6 +337,21 @@ namespace PracticeMonster
             defenseMonster.ApplyStageChanges(selectedMove, false);
             defenseMonster.CurrentHP = Mathf.Max(defenseMonster.CurrentHP - damage, 0);
             BattleUIManager.Instance.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
+            attackMonster.ApplyStatusEffectDamage();
+            if (Random.value < selectedMove.FlinchChance)
+            {
+                defender.ActionTurn += defenseMonster.GetActionTurnReset();
+                BattleUIManager.Instance.Log($"{defenseMonster.Nickname} flinched!");
+            }
+
+            // Apply status effects if the move can cause them
+            foreach (var statusEffect in selectedMove.StatusEffects)
+            {
+                if (Random.value < statusEffect.Value)
+                {
+                    defenseMonster.ApplyStatusEffect(new StatusEffect(statusEffect.Key));
+                }
+            }
         }
 
         private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)
@@ -476,5 +512,45 @@ namespace PracticeMonster
             winner.GainExperience((int)xpGained);
             BattleUIManager.Instance.Log($"{winner.Nickname} gained {xpGained} XP!");
         }
+
+        private List<string> CalculateTurnQueue()
+        {
+            List<string> turnQueue = new List<string>();
+
+            // Copy the current action turns
+            int trainer1ActionTurn = trainer1.ActionTurn;
+            int trainer2ActionTurn = trainer2.ActionTurn;
+
+            // Copy the current monsters
+            Monster trainer1Monster = trainer1.GetCurrentMonster();
+            Monster trainer2Monster = trainer2.GetCurrentMonster();
+            if (attacker == trainer1)
+            {
+                turnQueue.Add(trainer1Monster.Nickname);
+                trainer1ActionTurn += trainer1Monster.GetActionTurnReset();
+            }
+            else
+            {
+                turnQueue.Add(trainer2Monster.Nickname);
+                trainer2ActionTurn += trainer2Monster.GetActionTurnReset();
+            }
+            // Simulate the next 5 turns
+            for (int i = 0; i < 4; i++)
+            {
+                if (trainer1ActionTurn >= trainer2ActionTurn)
+                {
+                    turnQueue.Add(trainer1Monster.Nickname);
+                    trainer1ActionTurn += trainer1Monster.GetActionTurnReset();
+                }
+                else
+                {
+                    turnQueue.Add(trainer2Monster.Nickname);
+                    trainer2ActionTurn += trainer2Monster.GetActionTurnReset();
+                }
+            }
+
+            return turnQueue;
+        }
+
     }
 }

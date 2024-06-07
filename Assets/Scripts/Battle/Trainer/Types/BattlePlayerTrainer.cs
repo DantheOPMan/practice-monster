@@ -15,7 +15,7 @@ namespace PracticeMonster
         public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
         {
             Monster currentMonster = GetCurrentMonster();
-            BattleUIManager.Instance.ShowMoveSelectionUI(currentMonster, onMoveSelected);
+            BattleUIManager.Instance.ShowMoveSelectionUI(currentMonster);
             yield return new WaitUntil(() => BattleUIManager.Instance.IsMoveSelected());
             int selectedMoveIndex = BattleUIManager.Instance.GetSelectedMoveIndex();
             onMoveSelected(selectedMoveIndex);
@@ -23,14 +23,14 @@ namespace PracticeMonster
 
         public override IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected)
         {
-            BattleUIManager.Instance.ShowDefenseSelectionUI(onDefenseSelected);
+            BattleUIManager.Instance.ShowDefenseSelectionUI();
             yield return new WaitUntil(() => BattleUIManager.Instance.IsDefenseSelected());
             int selectedDefenseIndex = BattleUIManager.Instance.GetSelectedDefenseIndex();
             onDefenseSelected(selectedDefenseIndex);
         }
         public override IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected)
         {
-            BattleUIManager.Instance.ShowSwitchSelectionUI(PartyMonsters, onSwitchSelected);
+            BattleUIManager.Instance.ShowSwitchSelectionUI(PartyMonsters);
             yield return new WaitUntil(() => BattleUIManager.Instance.IsSwitchSelected());
             int selectedSwitchIndex = BattleUIManager.Instance.GetSelectedSwitchIndex();
             onSwitchSelected(selectedSwitchIndex);

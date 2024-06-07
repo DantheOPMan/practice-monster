@@ -27,6 +27,7 @@ namespace PracticeMonster
         public int SpecialAttackStage { get; set; }
         public int SpecialDefenseStage { get; set; }
         public int SpeedStage { get; set; }
+        public StatusEffect ActiveStatusEffect { get; private set; }
 
         public Monster(MonsterSpecies species, int level)
         {
@@ -44,6 +45,8 @@ namespace PracticeMonster
             {
                 HeldItem = null;
             }
+
+            ActiveStatusEffect = null;
 
             InitializeStats();
         }
@@ -232,6 +235,7 @@ namespace PracticeMonster
             CurrentSpecialAttack = UpdateCurrentStat(SpecialAttackStage, Data.SpecialAttack);
             CurrentSpecialDefense = UpdateCurrentStat(SpecialDefenseStage, Data.SpecialDefense);
             CurrentSpeed = UpdateCurrentStat(SpeedStage, Data.Speed);
+            ActiveStatusEffect?.ApplyEffect(this);
         }
         private int UpdateCurrentStat(int stage, int baseStat)
         {
@@ -296,6 +300,68 @@ namespace PracticeMonster
         {
 
         }
-        #endregion
+        public void ApplyStatusEffect(StatusEffect effect)
+        {
+            // Check if the monster already has the status effect
+            if (ActiveStatusEffect != null)
+            {
+                return;
+            }
+
+            ActiveStatusEffect = effect;
+            BattleUIManager.Instance.Log($"{Nickname} is now affected by {effect.Type}!");
+        }
+        public void ApplyStatusEffectDamage()
+        {
+            switch (ActiveStatusEffect?.Type)
+            {
+                case StatusEffectType.Burn:
+                case StatusEffectType.Frostbite:
+                case StatusEffectType.Poison:
+                case StatusEffectType.BadlyPoisoned:
+                    int damage = Mathf.FloorToInt(Data.MaxHP / 16f);
+                    if (ActiveStatusEffect.Type == StatusEffectType.BadlyPoisoned)
+                    {
+                        damage = Mathf.FloorToInt(damage * ActiveStatusEffect.Duration);
+                        ActiveStatusEffect.IncreaseDuration();
+                    }
+                    else if (ActiveStatusEffect.Type == StatusEffectType.Poison)
+                    {
+                        damage *= 2;
+                    }
+                    CurrentHP = Mathf.Max(CurrentHP - damage, 0);
+                    BattleUIManager.Instance.Log($"{Nickname} took {damage} damage from {ActiveStatusEffect.Type}!");
+                    break;
+            }
+        }
+        public bool CheckStatusEffectForAction()
+        {
+            switch (ActiveStatusEffect?.Type)
+            {
+                case StatusEffectType.Paralyze:
+                    if (Random.value < 0.25f)
+                    {
+                        BattleUIManager.Instance.Log($"{Nickname} is paralyzed and can't move!");
+                        return true;
+                    }
+                    break;
+                case StatusEffectType.Drowsy:
+                    if (Random.value < 0.2f)
+                    {
+                        BattleUIManager.Instance.Log($"{Nickname} awakened!");
+                        ActiveStatusEffect = null;
+                    }
+                    else if (Random.value > 0.5f)
+                    {
+                        BattleUIManager.Instance.Log($"{Nickname} is sleepy and won't move!");
+                        return true;
+                    }
+                    break;
+            }
+            return false ;
+        }
+
     }
+
+    #endregion
 }
