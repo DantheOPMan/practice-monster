@@ -204,8 +204,9 @@ namespace PracticeMonster
         private IEnumerator SelectItem()
         {
             Monster attackMonster = attacker.GetCurrentMonster();
-            attackMonster.CurrentHP = Mathf.Min(attackMonster.CurrentHP + 5, attackMonster.Data.MaxHP);
-            BattleUIManager.Instance.Log($"{attackMonster.Nickname} healed 5 HP!");
+            attacker.ActionTurn += attackMonster.GetActionTurnReset();
+            attackMonster.CurrentHP = Mathf.Min(attackMonster.CurrentHP + 10, attackMonster.Data.MaxHP);
+            BattleUIManager.Instance.Log($"{attackMonster.Nickname} healed 10 HP!");
             state = BattleState.EndTurn;
             yield break;
         }
@@ -302,108 +303,18 @@ namespace PracticeMonster
             Monster defenseMonster = defender.GetCurrentMonster();
             Move selectedMove = attackMonster.Data.Moves[attackerMoveIndex];
 
-            BattleUIManager.Instance.Log($"{attackMonster.Nickname} uses {selectedMove.Name}!");
-
             string defensiveAction = GetDefensiveAction(defenseMonster, defenderActionIndex);
-            
-            if (attackMonster.CheckStatusEffectForAction())
-            {
-                attacker.ActionTurn += attackMonster.GetActionTurnReset();
-                return;
-            }
 
-            if (attackMonster.Stamina < selectedMove.StaminaCost)
-            {
-                BattleUIManager.Instance.Log($"{attackMonster.Nickname} does not have enough stamina to use {selectedMove.Name}!");
-                attacker.ActionTurn += attackMonster.GetActionTurnReset();
-                return;
-            }
-
-            // Defender's defensive action
-
-            attackMonster.Stamina -= selectedMove.StaminaCost;
-            attacker.ActionTurn += selectedMove.TurnAdjustment + attackMonster.GetActionTurnReset();
-
-            // Calculate hit probability
-            if (!CalculateHit(attackMonster, defenseMonster, selectedMove, defensiveAction))
-            {
-                BattleUIManager.Instance.Log($"{attackMonster.Nickname} missed with {selectedMove.Name}!");
-                return;
-            }
-
-            // Calculate damage and apply
-            int damage = CalculateDamage(attackMonster, defenseMonster, selectedMove, defensiveAction);
-            attackMonster.ApplyStageChanges(selectedMove, true);
-            defenseMonster.ApplyStageChanges(selectedMove, false);
-            defenseMonster.CurrentHP = Mathf.Max(defenseMonster.CurrentHP - damage, 0);
-            BattleUIManager.Instance.Log($"{attackMonster.Nickname} used {selectedMove.Name} and dealt {damage} damage to {defenseMonster.Nickname}!");
-            attackMonster.ApplyStatusEffectDamage();
-            if (Random.value < selectedMove.FlinchChance)
-            {
-                defender.ActionTurn += defenseMonster.GetActionTurnReset();
-                BattleUIManager.Instance.Log($"{defenseMonster.Nickname} flinched!");
-            }
-
-            // Apply status effects if the move can cause them
-            foreach (var statusEffect in selectedMove.StatusEffects)
-            {
-                if (Random.value < statusEffect.Value)
-                {
-                    defenseMonster.ApplyStatusEffect(new StatusEffect(statusEffect.Key));
-                }
-            }
-        }
-
-        private bool CalculateHit(Monster attacker, Monster defender, Move move, string defensiveAction)
-        {
-            if (defensiveAction == "Brace")
-            {
-                return true;
-            }
-            float dodgeProbability = defensiveAction == "Dodge" ? defender.GetDodgeProbability(attacker.CurrentSpeed) : 0;
-            float hitProbability = move.Accuracy * (1 - dodgeProbability) * attacker.GetAccuracyMultiplier() * defender.GetEvasivenessMultiplier();
-            return Random.value <= hitProbability;
-        }
-
-        private int CalculateDamage(Monster attacker, Monster defender, Move move, string defensiveAction)
-        {
-            float defensiveMultiplier = 1f;
-            if (defensiveAction == "Brace")
-            {
-                defensiveMultiplier = 1.5f;
-            }
-
-            int attackStat = move.Category == MoveCategory.Physical ? attacker.CurrentAttack : attacker.CurrentSpecialAttack;
-            int defenseStat = move.Category == MoveCategory.Physical ? defender.CurrentDefense : defender.CurrentSpecialDefense;
-
-            float modifier = 1;
-
-            // STAB (Same Type Attack Bonus)
-            if (attacker.Data.Species.Types.Contains(move.Type))
-            {
-                modifier *= 1.5f;
-            }
-
-            // Critical hit
-            if (Random.value < move.CritRate)
-            {
-                modifier *= 1.5f;
-                BattleUIManager.Instance.Log("Critical hit!");
-            }
-
-            float typeEffectiveness = 1;
-            foreach (var defenderType in defender.Data.Species.Types)
-            {
-                typeEffectiveness *= TypeEffectiveness.GetEffectiveness(move.Type, defenderType);
-            }
-            modifier *= typeEffectiveness;
-
-            float damage = ((((attacker.Data.Level * 2f + 20f) / 300f)) * (move.Power * modifier) * ((float)attackStat / (defensiveMultiplier * (float)defenseStat)));
-            return Mathf.FloorToInt(damage);
+            selectedMove.Execute(attacker, defender, defensiveAction);
         }
 
         private string GetDefensiveAction(Monster defender, int index)
         {
+            if (defender.CheckStatusEffectForAction())
+            {
+                BattleUIManager.Instance.Log($"{defender.Nickname} stands by.");
+                return "Standby";
+            }
             if (index == 0 && defender.Stamina >= 30)
             {
                 BattleUIManager.Instance.Log($"{defender.Nickname} attempts to dodge!");

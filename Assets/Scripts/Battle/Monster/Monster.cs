@@ -235,7 +235,7 @@ namespace PracticeMonster
             CurrentSpecialAttack = UpdateCurrentStat(SpecialAttackStage, Data.SpecialAttack);
             CurrentSpecialDefense = UpdateCurrentStat(SpecialDefenseStage, Data.SpecialDefense);
             CurrentSpeed = UpdateCurrentStat(SpeedStage, Data.Speed);
-            ActiveStatusEffect?.ApplyEffect(this);
+            ApplyStatusEffectStatChange();
         }
         private int UpdateCurrentStat(int stage, int baseStat)
         {
@@ -311,6 +311,22 @@ namespace PracticeMonster
             ActiveStatusEffect = effect;
             BattleUIManager.Instance.Log($"{Nickname} is now affected by {effect.Type}!");
         }
+        public void ApplyStatusEffectStatChange()
+        {
+            switch (ActiveStatusEffect?.Type)
+            {
+                case StatusEffectType.Burn:
+                    CurrentAttack = Mathf.FloorToInt(CurrentAttack * 0.5f);
+                    break;
+                case StatusEffectType.Paralyze:
+                    CurrentSpeed = Mathf.FloorToInt(CurrentSpeed * 0.5f);
+                    break;
+                case StatusEffectType.Frostbite:
+                    CurrentSpeed = Mathf.FloorToInt(CurrentSpecialAttack * 0.5f);
+                    break;
+            }
+        }
+
         public void ApplyStatusEffectDamage()
         {
             switch (ActiveStatusEffect?.Type)
