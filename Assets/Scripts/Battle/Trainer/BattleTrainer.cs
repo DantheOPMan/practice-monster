@@ -20,9 +20,9 @@ namespace PracticeMonster
             ActionTurn = 0;
         }
 
-        public abstract IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected);
-        public abstract IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected);
-        public abstract IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected);
+        public abstract IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected, BattleUIManager battleUIManager = null);
+        public abstract IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected, BattleUIManager battleUIManager = null);
+        public abstract IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected, BattleUIManager battleUIManager = null);
 
         public abstract Monster GetNextMonster();
         public Monster GetCurrentMonster()

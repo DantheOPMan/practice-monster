@@ -78,11 +78,11 @@ namespace PracticeMonster
         #endregion
 
         #region Reusable Methods
-        public float ActivateAbility(Battle battle, AbilityTrigger trigger, Move move, Monster target = null)
+        public float ActivateAbility(Battle battle, AbilityTrigger trigger, Move move, Monster target = null, BattleUIManager battleUIManager=null)
         {
             if (Ability != null && Ability.Triggers.Contains(trigger))
             {
-                return Ability.Activate(battle, this, move, target);
+                return Ability.Activate(battle, this, move, target, battleUIManager);
             }
             return 1.0f;
         }
@@ -175,7 +175,8 @@ namespace PracticeMonster
             else
                 return (3f / (Mathf.Abs(EvasivenessStage) + 3f));
         }
-        public void ApplyStageChanges(Move move, bool isAttacker)
+
+        public void ApplyStageChanges(Move move, bool isAttacker, BattleUIManager battleUIManager)
         {
             Dictionary<string, int> stageChanges = isAttacker ? move.AttackerStageChanges : move.DefenderStageChanges;
 
@@ -185,55 +186,61 @@ namespace PracticeMonster
                 {
                     case "Attack":
                         CurrentAttack += stageChange.Value;
+                        LogStageChange("Attack", stageChange.Value, battleUIManager);
                         break;
                     case "Defense":
                         CurrentDefense += stageChange.Value;
+                        LogStageChange("Defense", stageChange.Value, battleUIManager);
                         break;
                     case "SpecialAttack":
                         CurrentSpecialAttack += stageChange.Value;
+                        LogStageChange("Special Attack", stageChange.Value, battleUIManager);
                         break;
                     case "SpecialDefense":
                         CurrentSpecialDefense += stageChange.Value;
+                        LogStageChange("Special Defense", stageChange.Value, battleUIManager);
                         break;
                     case "Speed":
                         CurrentSpeed += stageChange.Value;
+                        LogStageChange("Speed", stageChange.Value, battleUIManager);
                         break;
                     case "Accuracy":
                         AccuracyStage += stageChange.Value;
+                        LogStageChange("Accuracy", stageChange.Value, battleUIManager);
                         break;
                     case "Evasiveness":
                         EvasivenessStage += stageChange.Value;
+                        LogStageChange("Evasiveness", stageChange.Value, battleUIManager);
                         break;
                 }
             }
         }
 
-
-        private void LogStageChange(string statName, int change)
+        private void LogStageChange(string statName, int change, BattleUIManager battleUIManager)
         {
             if (change == 1)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} increased!");
+                battleUIManager.Log($"{Nickname}'s {statName} increased!");
             }
             else if (change == 2)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} significantly increased!");
+                battleUIManager.Log($"{Nickname}'s {statName} significantly increased!");
             }
             else if (change >= 3)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} dramatically increased!");
+                battleUIManager.Log($"{Nickname}'s {statName} dramatically increased!");
             }
             else if (change == -1)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} decreased!");
+                battleUIManager.Log($"{Nickname}'s {statName} decreased!");
             }
             else if (change == -2)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} significantly decreased!");
+                battleUIManager.Log($"{Nickname}'s {statName} significantly decreased!");
             }
             else if (change <= -3)
             {
-                BattleUIManager.Instance.Log($"{Nickname}'s {statName} dramatically decreased!");
+                battleUIManager.Log($"{Nickname}'s {statName} dramatically decreased!");
             }
         }
 
@@ -246,6 +253,7 @@ namespace PracticeMonster
             CurrentSpeed = UpdateCurrentStat(SpeedStage, Data.Speed);
             ApplyStatusEffectStatChange();
         }
+
         private int UpdateCurrentStat(int stage, int baseStat)
         {
             float stageFloat = (float)Mathf.Abs(stage);
@@ -258,7 +266,8 @@ namespace PracticeMonster
             else
                 return baseStat;
         }
-        public void GainEVs(Monster loser)
+
+        public void GainEVs(Monster loser, BattleUIManager battleUIManager)
         {
             int totalEVs = 0;
             foreach (var ev in Data.EVs)
@@ -285,31 +294,34 @@ namespace PracticeMonster
                 }
 
                 totalEVs += evGain;
-                BattleUIManager.Instance.Log($"{Nickname} gained {ev.Value} {ev.Key} EV(s)!");
+                battleUIManager.Log($"{Nickname} gained {ev.Value} {ev.Key} EV(s)!");
             }
         }
-        public void GainExperience(int xp)
+
+        public void GainExperience(int xp, BattleUIManager battleUIManager)
         {
             Data.GainExperience(xp);
             while (Data.CurrentExperience >= Data.Species.ExperienceForNextLevel(Data.Level))
             {
-                LevelUp();
+                LevelUp(battleUIManager);
             }
         }
 
-        private void LevelUp()
+        private void LevelUp(BattleUIManager battleUIManager)
         {
             Data.LevelUp();
-            BattleUIManager.Instance.Log($"{Nickname} leveled up to level {Data.Level}!");
+            battleUIManager.Log($"{Nickname} leveled up to level {Data.Level}!");
 
             // Learn new moves if any are available at the new level
-            LearnNewMoves();
+            LearnNewMoves(battleUIManager);
         }
-        private void LearnNewMoves()
-        {
 
+        private void LearnNewMoves(BattleUIManager battleUIManager)
+        {
+            // Add logic to learn new moves if any are available at the new level
         }
-        public void ApplyStatusEffect(StatusEffect effect)
+
+        public void ApplyStatusEffect(StatusEffect effect, BattleUIManager battleUIManager)
         {
             // Check if the monster already has the status effect
             if (ActiveStatusEffect != null)
@@ -318,8 +330,10 @@ namespace PracticeMonster
             }
 
             ActiveStatusEffect = effect;
-            BattleUIManager.Instance.Log($"{Nickname} is now affected by {effect.Type}!");
+            battleUIManager.Log($"{Nickname} is now affected by {effect.Type}!");
+            ApplyStatusEffectStatChange();
         }
+
         public void ApplyStatusEffectStatChange()
         {
             switch (ActiveStatusEffect?.Type)
@@ -331,12 +345,12 @@ namespace PracticeMonster
                     CurrentSpeed = Mathf.FloorToInt(CurrentSpeed * 0.5f);
                     break;
                 case StatusEffectType.Frostbite:
-                    CurrentSpeed = Mathf.FloorToInt(CurrentSpecialAttack * 0.5f);
+                    CurrentSpecialAttack = Mathf.FloorToInt(CurrentSpecialAttack * 0.5f);
                     break;
             }
         }
 
-        public void ApplyStatusEffectDamage()
+        public void ApplyStatusEffectDamage(BattleUIManager battleUIManager)
         {
             switch (ActiveStatusEffect?.Type)
             {
@@ -355,38 +369,38 @@ namespace PracticeMonster
                         damage *= 2;
                     }
                     CurrentHP = Mathf.Max(CurrentHP - damage, 0);
-                    BattleUIManager.Instance.Log($"{Nickname} took {damage} damage from {ActiveStatusEffect.Type}!");
+                    battleUIManager.Log($"{Nickname} took {damage} damage from {ActiveStatusEffect.Type}!");
                     break;
             }
         }
-        public bool CheckStatusEffectForAction()
+
+        public bool CheckStatusEffectForAction(BattleUIManager battleUIManager)
         {
             switch (ActiveStatusEffect?.Type)
             {
                 case StatusEffectType.Paralyze:
                     if (Random.value < 0.25f)
                     {
-                        BattleUIManager.Instance.Log($"{Nickname} is paralyzed and can't move!");
+                        battleUIManager.Log($"{Nickname} is paralyzed and can't move!");
                         return true;
                     }
                     break;
                 case StatusEffectType.Drowsy:
                     if (Random.value < 0.2f)
                     {
-                        BattleUIManager.Instance.Log($"{Nickname} awakened!");
+                        battleUIManager.Log($"{Nickname} awakened!");
                         ActiveStatusEffect = null;
                     }
                     else if (Random.value > 0.5f)
                     {
-                        BattleUIManager.Instance.Log($"{Nickname} is sleepy and won't move!");
+                        battleUIManager.Log($"{Nickname} is sleepy and won't move!");
                         return true;
                     }
                     break;
             }
-            return false ;
+            return false;
         }
 
+        #endregion
     }
-
-    #endregion
 }

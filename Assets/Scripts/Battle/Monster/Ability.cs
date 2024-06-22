@@ -14,7 +14,6 @@ namespace PracticeMonster
         OnKnockedOut
     }
 
-
     public abstract class Ability
     {
         public string Name { get; private set; }
@@ -28,6 +27,6 @@ namespace PracticeMonster
             Triggers = triggers;
         }
 
-        public abstract float Activate(Battle battle, Monster owner, Move move, Monster target = null);
+        public abstract float Activate(Battle battle, Monster owner, Move move, Monster target, BattleUIManager battleUIManager);
     }
 }

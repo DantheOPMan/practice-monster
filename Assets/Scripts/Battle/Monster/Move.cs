@@ -41,23 +41,25 @@ namespace PracticeMonster
             StatusEffects = statusEffects ?? new Dictionary<StatusEffectType, float>();
         }
 
-        public void Execute(BattleTrainer attackerTrainer, BattleTrainer defenderTrainer, string defensiveAction)
+        public void Execute(BattleTrainer attackerTrainer, BattleTrainer defenderTrainer, string defensiveAction, BattleUIManager battleUIManager)
         {
             Monster attackerMonster = attackerTrainer.GetCurrentMonster();
             Monster defenderMonster = defenderTrainer.GetCurrentMonster();
 
-            BattleUIManager.Instance.Log($"{attackerMonster.Nickname} uses {Name}!");
+            battleUIManager.Log($"{attackerMonster.Nickname} uses {Name}!");
 
-            if (attackerMonster.CheckStatusEffectForAction())
+            if (attackerMonster.CheckStatusEffectForAction(battleUIManager))
             {
                 attackerTrainer.ActionTurn += attackerMonster.GetActionTurnReset();
+                attackerMonster.ApplyStatusEffectDamage(battleUIManager);
                 return;
             }
 
             if (attackerMonster.Stamina < StaminaCost)
             {
-                BattleUIManager.Instance.Log($"{attackerMonster.Nickname} does not have enough stamina to use {Name}!");
+                battleUIManager.Log($"{attackerMonster.Nickname} does not have enough stamina to use {Name}!");
                 attackerTrainer.ActionTurn += attackerMonster.GetActionTurnReset();
+                attackerMonster.ApplyStatusEffectDamage(battleUIManager);
                 return;
             }
 
@@ -66,30 +68,31 @@ namespace PracticeMonster
 
             if (!CalculateHit(attackerMonster, defenderMonster, defensiveAction))
             {
-                BattleUIManager.Instance.Log($"{attackerMonster.Nickname} missed with {Name}!");
+                battleUIManager.Log($"{attackerMonster.Nickname} missed with {Name}!");
+                attackerMonster.ApplyStatusEffectDamage(battleUIManager);
                 return;
             }
 
-            int damage = CalculateDamage(attackerMonster, defenderMonster, defensiveAction);
-            float abilityMultiplier = attackerMonster.ActivateAbility(null, AbilityTrigger.OnMoveUsed, this, defenderMonster);
+            int damage = CalculateDamage(attackerMonster, defenderMonster, defensiveAction, battleUIManager);
+            float abilityMultiplier = attackerMonster.ActivateAbility(null, AbilityTrigger.OnMoveUsed, this, defenderMonster, battleUIManager);
 
-            attackerMonster.ApplyStageChanges(this, true);
-            defenderMonster.ApplyStageChanges(this, false);
+            attackerMonster.ApplyStageChanges(this, true, battleUIManager);
+            defenderMonster.ApplyStageChanges(this, false, battleUIManager);
             defenderMonster.CurrentHP = Mathf.Max(defenderMonster.CurrentHP - damage, 0);
-            BattleUIManager.Instance.Log($"{attackerMonster.Nickname} used {Name} and dealt {damage} damage to {defenderMonster.Nickname}!");
-            attackerMonster.ApplyStatusEffectDamage();
+            battleUIManager.Log($"{attackerMonster.Nickname} used {Name} and dealt {damage} damage to {defenderMonster.Nickname}!");
+            attackerMonster.ApplyStatusEffectDamage(battleUIManager);
 
             if (Random.value < FlinchChance)
             {
                 defenderTrainer.ActionTurn += defenderMonster.GetActionTurnReset();
-                BattleUIManager.Instance.Log($"{defenderMonster.Nickname} flinched!");
+                battleUIManager.Log($"{defenderMonster.Nickname} flinched!");
             }
 
             foreach (var statusEffect in StatusEffects)
             {
                 if (Random.value < statusEffect.Value)
                 {
-                    defenderMonster.ApplyStatusEffect(new StatusEffect(statusEffect.Key));
+                    defenderMonster.ApplyStatusEffect(new StatusEffect(statusEffect.Key), battleUIManager);
                 }
             }
         }
@@ -105,7 +108,7 @@ namespace PracticeMonster
             return Random.value <= hitProbability;
         }
 
-        private int CalculateDamage(Monster attacker, Monster defender, string defensiveAction)
+        private int CalculateDamage(Monster attacker, Monster defender, string defensiveAction, BattleUIManager battleUIManager)
         {
             float defensiveMultiplier = defensiveAction == "Brace" ? 1.5f : 1f;
 
@@ -122,7 +125,7 @@ namespace PracticeMonster
             if (Random.value < CritRate)
             {
                 modifier *= 1.5f;
-                BattleUIManager.Instance.Log("Critical hit!");
+                battleUIManager.Log("Critical hit!");
             }
 
             float typeEffectiveness = 1;

@@ -12,29 +12,32 @@ namespace PracticeMonster
         {
         }
 
-        public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected)
+        public override IEnumerator SelectMove(Battle battle, System.Action<int> onMoveSelected, BattleUIManager battleUIManager)
         {
             Monster currentMonster = GetCurrentMonster();
-            BattleUIManager.Instance.ShowMoveSelectionUI(currentMonster);
-            yield return new WaitUntil(() => BattleUIManager.Instance.IsMoveSelected());
-            int selectedMoveIndex = BattleUIManager.Instance.GetSelectedMoveIndex();
+            battleUIManager.ShowMoveSelectionUI(currentMonster);
+            yield return new WaitUntil(() => battleUIManager.IsMoveSelected());
+            int selectedMoveIndex = battleUIManager.GetSelectedMoveIndex();
             onMoveSelected(selectedMoveIndex);
         }
 
-        public override IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected)
+        public override IEnumerator Defend(Battle battle, System.Action<int> onDefenseSelected, BattleUIManager battleUIManager)
         {
-            BattleUIManager.Instance.ShowDefenseSelectionUI();
-            yield return new WaitUntil(() => BattleUIManager.Instance.IsDefenseSelected());
-            int selectedDefenseIndex = BattleUIManager.Instance.GetSelectedDefenseIndex();
+            battleUIManager.ShowDefenseSelectionUI();
+            yield return new WaitUntil(() => battleUIManager.IsDefenseSelected());
+            int selectedDefenseIndex = battleUIManager.GetSelectedDefenseIndex();
             onDefenseSelected(selectedDefenseIndex);
         }
-        public override IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected)
+
+        public override IEnumerator SwitchMonster(Battle battle, System.Action<int> onSwitchSelected, BattleUIManager battleUIManager)
         {
-            BattleUIManager.Instance.ShowSwitchSelectionUI(PartyMonsters);
-            yield return new WaitUntil(() => BattleUIManager.Instance.IsSwitchSelected());
-            int selectedSwitchIndex = BattleUIManager.Instance.GetSelectedSwitchIndex();
+            int currentMonsterIndex = PartyMonsters.IndexOf(GetCurrentMonster());
+            battleUIManager.ShowSwitchSelectionUI(PartyMonsters, currentMonsterIndex);
+            yield return new WaitUntil(() => battleUIManager.IsSwitchSelected());
+            int selectedSwitchIndex = battleUIManager.GetSelectedSwitchIndex();
             onSwitchSelected(selectedSwitchIndex);
         }
+
 
         public override Monster GetNextMonster()
         {

@@ -23,7 +23,7 @@ namespace PracticeMonster
 
         private void OnDisable()
         {
-            InputActions.Disable();
+            InputActions.Disable(); 
         }
 
         public void DisableActionFor(InputAction action, float seconds)

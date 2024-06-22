@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PracticeMonster
@@ -5,12 +6,9 @@ namespace PracticeMonster
     public class BattleManager : MonoBehaviour
     {
         public GameObject battleUIManagerPrefab; // Reference to the BattleUIManager prefab
-        private GameObject battleUIManagerInstance;
 
-        private BattleTrainer playerTrainer;
-        private BattleTrainer opponentTrainer;
-        private Battle battle;
-        private bool isBattleActive = false;
+        private List<Battle> activeBattles = new List<Battle>();
+        private Dictionary<ITrainerData, BattleTrainer> activeTrainers = new Dictionary<ITrainerData, BattleTrainer>();
 
         void Start()
         {
@@ -29,33 +27,44 @@ namespace PracticeMonster
 
         public void StartBattle(BattleTrainer trainer1, BattleTrainer trainer2)
         {
+            if (activeTrainers.ContainsKey(trainer1.Data) || activeTrainers.ContainsKey(trainer2.Data))
+            {
+                Debug.Log("One of the trainers is already in a battle.");
+                return;
+            }
+
             // Instantiate the BattleUIManager prefab
-            battleUIManagerInstance = Instantiate(battleUIManagerPrefab);
+            GameObject battleUIManagerInstance = Instantiate(battleUIManagerPrefab);
+            BattleUIManager battleUIManager = battleUIManagerInstance.GetComponent<BattleUIManager>();
 
             // Initialize and start the battle
-            battle = gameObject.AddComponent<Battle>();
-            battle.Initialize(trainer1, trainer2);
-            isBattleActive = true;
+            Battle battle = gameObject.AddComponent<Battle>();
+            battle.Initialize(trainer1, trainer2, battleUIManager);
+            activeBattles.Add(battle);
+            activeTrainers[trainer1.Data] = trainer1;
+            activeTrainers[trainer2.Data] = trainer2;
         }
 
-        public void EndBattle()
+        public void EndBattle(Battle battle)
         {
-            // Clean up after the battle
-            if (battleUIManagerInstance != null)
+            if (battle != null)
             {
-                BattleUIManager.Instance.EndBattleUI();
-                Destroy(battleUIManagerInstance);
+                BattleUIManager battleUIManager = battle.GetBattleUIManager();
+                if (battleUIManager != null)
+                {
+                    battleUIManager.EndBattleUI();
+                    Destroy(battleUIManager.gameObject);
+                }
+
+                activeTrainers.Remove(battle.GetTrainer1().Data);
+                activeTrainers.Remove(battle.GetTrainer2().Data);
+                activeBattles.Remove(battle);
+                Destroy(battle);
             }
-            isBattleActive = false;
         }
 
         private void OnTriggerEnter(Collider collider)
         {
-            if (isBattleActive)
-            {
-                Debug.Log("A battle is already in progress!");
-                return;
-            }
             if (collider.CompareTag("Trainer"))
             {
                 TrainerComponent trainerComponent1 = GetComponent<TrainerComponent>();
@@ -67,13 +76,17 @@ namespace PracticeMonster
                     BattleTrainer trainer1 = CreateTrainerFromData(trainerComponent1.TrainerData);
                     BattleTrainer trainer2 = CreateTrainerFromData(trainerComponent2.TrainerData);
                     StartBattle(trainer1, trainer2);
-
                 }
             }
         }
 
         private BattleTrainer CreateTrainerFromData(ITrainerData data)
         {
+            if (activeTrainers.TryGetValue(data, out var existingTrainer))
+            {
+                return existingTrainer;
+            }
+
             if (data is PlayerTrainerData)
             {
                 return new BattlePlayerTrainer((PlayerTrainerData)data);

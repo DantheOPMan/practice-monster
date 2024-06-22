@@ -196,14 +196,13 @@ namespace PracticeMonster
             standbyButton.onClick.AddListener(() => { OnDefenseButtonClicked(2); defenseSelectionPanel.SetActive(false); });
         }
 
-        public void ShowSwitchSelectionUI(List<Monster> monsters)
+        public void ShowSwitchSelectionUI(List<Monster> monsters, int currentMonsterIndex)
         {
             switchSelectionPanel.SetActive(true);
 
-            // Assuming you have 6 buttons on the canvas with names SwitchButton0 to SwitchButton5
             for (int i = 0; i < 6; i++)
             {
-                Button switchButton = switchSelectionPanel.transform.Find("SwitchButton" + (i+1)).GetComponent<Button>();
+                Button switchButton = switchSelectionPanel.transform.Find("SwitchButton" + (i + 1)).GetComponent<Button>();
                 TextMeshProUGUI buttonText = switchButton.GetComponentInChildren<TextMeshProUGUI>();
 
                 if (i < monsters.Count)
@@ -215,7 +214,12 @@ namespace PracticeMonster
                         switchButton.interactable = true;
                         switchButton.onClick.RemoveAllListeners(); // Clear previous listeners
                         int index = i; // Capture the current index
-                        switchButton.onClick.AddListener(() => {selectedSwitchIndex = index; switchSelected = true; switchSelectionPanel.SetActive(false); });
+                        switchButton.onClick.AddListener(() =>
+                        {
+                            selectedSwitchIndex = index;
+                            switchSelected = true;
+                            switchSelectionPanel.SetActive(false);
+                        });
                     }
                     else
                     {
@@ -230,13 +234,14 @@ namespace PracticeMonster
                 }
 
                 // Ensure the current monster button is visible and disabled
-                if (i == selectedMoveIndex)
+                if (i == currentMonsterIndex)
                 {
                     switchButton.interactable = false;
                     switchButton.gameObject.SetActive(true);
                 }
             }
         }
+
 
 
         public void UpdateHpSlider(Slider hpSlider, TextMeshProUGUI hpText, int currentHP, int maxHP)
